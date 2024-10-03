@@ -1,25 +1,27 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Modal, Button, TextInput, Checkbox } from "@mantine/core";
 import styles from "@/app/components/AddUserModal.module.css";
 import "@mantine/notifications/styles.css";
 import { notifications } from "@mantine/notifications";
 import { Person } from "@/app/utils/types";
 
-interface AddUserModalProps {
+interface EditUserModalProps {
   opened: boolean;
   open: () => void;
   close: () => void;
   creatorRole: string;
   setRefreshUsers: (value: boolean) => void;
+  personEdit: Person | null;
 }
 
-export default function AddUserModal({
+export default function EditUserModal({
   opened,
   open,
   close,
   creatorRole,
   setRefreshUsers,
-}: AddUserModalProps) {
+  personEdit,
+}: EditUserModalProps) {
   const [invalidFirstName, setInvalidFirstName] = useState(false);
   const [invalidLastName, setInvalidLastName] = useState(false);
   const [invalidEmail, setInvalidEmail] = useState(false);
@@ -43,6 +45,8 @@ export default function AddUserModal({
     close();
   };
 
+  const [personId, setPersonId] = useState<string | null>(null);
+
   const [newPersonForm, setNewPersonForm] = useState({
     firstName: "",
     lastName: "",
@@ -55,6 +59,24 @@ export default function AddUserModal({
     professor: false,
     student: false,
   });
+
+  useEffect(() => {
+    if (personEdit) {
+      setPersonId(personEdit.id.toString());
+      setNewPersonForm({
+        firstName: personEdit.firstName || "",
+        lastName: personEdit.lastName || "",
+        email: personEdit.email || "",
+        username: personEdit.username || "",
+        indexNumber: personEdit.indexNumber || "",
+        academicTitle: personEdit.academicTitle || "",
+        admin: personEdit.admin || false,
+        worker: personEdit.worker || false,
+        professor: personEdit.professor || false,
+        student: personEdit.student || false,
+      });
+    }
+  }, [opened, personEdit]);
 
   const handleFormInput = (e: React.ChangeEvent<any>) => {
     const { name, value } = e.target;
@@ -93,9 +115,9 @@ export default function AddUserModal({
     e.preventDefault();
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/persons`,
+        `${process.env.NEXT_PUBLIC_API_URL}/persons/${personId}`,
         {
-          method: "POST",
+          method: "PUT",
           headers: {
             "content-type": "application/json",
           },
@@ -107,9 +129,10 @@ export default function AddUserModal({
         setRefreshUsers(true);
         handleClose();
         notifications.show({
+          color: "green",
           withBorder: true,
-          title: "Korisnik dodan",
-          message: `Korisnik ${newPersonForm.firstName} ${newPersonForm.lastName} je uspješno dodan`,
+          title: "Korisnik uređen",
+          message: `Korisnik ${newPersonForm.firstName} ${newPersonForm.lastName} je uspješno uređen`,
         });
       } else {
         const errorData = await response.json();
@@ -127,12 +150,14 @@ export default function AddUserModal({
     }
   };
 
+
   return (
     <>
-      <Modal opened={opened} onClose={handleClose} title="Dodaj korisnika">
+      <Modal opened={opened} onClose={handleClose} title="Uredi korisnika">
         <form onSubmit={onSubmit}>
           <TextInput
             data-autofocus
+            value={newPersonForm.firstName}
             name="firstName"
             label="Ime"
             onChange={handleFormInput}
@@ -141,6 +166,7 @@ export default function AddUserModal({
             required
           />
           <TextInput
+            value={newPersonForm.lastName}
             name="lastName"
             label="Prezime"
             onChange={handleFormInput}
@@ -149,6 +175,7 @@ export default function AddUserModal({
             required
           />
           <TextInput
+            value={newPersonForm.email}
             name="email"
             label="Email"
             onChange={handleFormInput}
@@ -157,6 +184,7 @@ export default function AddUserModal({
             required
           />
           <TextInput
+            value={newPersonForm.username}
             name="username"
             label="Korisničko ime"
             onChange={handleFormInput}
@@ -165,12 +193,14 @@ export default function AddUserModal({
             required
           />
           <TextInput
+            value={newPersonForm.indexNumber}
             name="indexNumber"
             label="Broj indeksa"
             onChange={handleFormInput}
             mb={10}
           />
           <TextInput
+            value={newPersonForm.academicTitle}
             name="academicTitle"
             label="Akademski naziv"
             onChange={handleFormInput}
@@ -179,12 +209,14 @@ export default function AddUserModal({
           <div className={styles.checkboxTwoRows}>
             <div>
               <Checkbox
+                checked={newPersonForm.admin}
                 mb={10}
                 name="admin"
                 label="Admin"
                 onChange={handleFormInput}
               />
               <Checkbox
+                checked={newPersonForm.worker}
                 mb={10}
                 name="worker"
                 label="Radnik"
@@ -193,12 +225,14 @@ export default function AddUserModal({
             </div>
             <div>
               <Checkbox
+                checked={newPersonForm.professor}
                 mb={10}
                 name="professor"
                 label="Profesor"
                 onChange={handleFormInput}
               />
               <Checkbox
+                checked={newPersonForm.student}
                 mb={10}
                 name="student"
                 label="Student"
@@ -207,7 +241,7 @@ export default function AddUserModal({
             </div>
           </div>
           <Button type="submit" fullWidth mt={20}>
-            Dodaj
+            Uredi
           </Button>
           {invalidUsername && (
             <div className={styles.error}>Korisničko ime već postoji</div>

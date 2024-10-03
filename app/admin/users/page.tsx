@@ -14,11 +14,15 @@ import DecodeCookie from "@/app/auth/DecodeCookie";
 import { getPlainCookie } from "@/app/auth/getPlainCookie";
 import { notifications } from "@mantine/notifications";
 import FilterUsersDrawer from "@/app/components/FilterUsersDrawer";
+import EditUserModal from "@/app/components/EditUserModal";
+import DeleteUserModal from "@/app/components/DeleteUserModal";
 
 function page() {
   const authorized = useCheckRole("ROLE_ADMIN");
 
   const [response, setResponse] = useState<ApiResponsePerson | null>(null);
+  const [personEdit, setPersonEdit] = useState<Person | null>(null);
+  const [personDelete, setPersonDelete] = useState<Person | null>(null);
 
   const [elements, setElements] = useState<any[]>([]);
   const [filterQuery, setFilterQuery] = useState<string>("");
@@ -32,6 +36,14 @@ function page() {
   const [
     openedAddUserModal,
     { open: openAddUserModal, close: closeAddUserModal },
+  ] = useDisclosure(false);
+  const [
+    openedEditUserModal,
+    { open: openEditUserModal, close: closeEditUserModal },
+  ] = useDisclosure(false);
+  const [
+    openedDeleteUserModal,
+    { open: openDeleteUserModal, close: closeDeleteUserModal },
   ] = useDisclosure(false);
   const [
     openedFilterDrawer,
@@ -51,7 +63,6 @@ function page() {
 
   //Fetch users
   const fetchData = useCallback(async () => {
-    // console.log(`${process.env.NEXT_PUBLIC_API_URL}/persons/filter?page=${currentPage}&size=${pageSize}${filterQuery}`);
     try {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/persons/filter?page=${
@@ -86,9 +97,14 @@ function page() {
         id: person.id,
         firstName: person.firstName,
         lastName: person.lastName,
+        username: person.username,
         email: person.email,
         indexNumber: person.indexNumber,
-        roles: `${person.admin ? "(Admin) " : ""}${
+        admin: person.admin,
+        worker: person.worker,
+        professor: person.professor,
+        student: person.student,
+        rolesDisplay: `${person.admin ? "(Admin) " : ""}${
           person.worker ? "(Radnik) " : ""
         }${person.professor ? "(Profesor) " : ""}${
           person.student ? "(Student) " : ""
@@ -98,9 +114,27 @@ function page() {
     }
   }, [response]);
 
-  // useEffect(() => {
-  //   console.log("Elements: ", elements);
-  // }, [elements]);
+  // function to trigger openEditUserModal and set personEdit
+  const handleEditUser = (person: Person) => {
+    setPersonEdit(person);
+  };
+
+  useEffect(() => {
+    if (personEdit) {
+      openEditUserModal();
+    }
+  }, [personEdit]);
+
+  // function to trigger openDeleteUserModal and set personEdit
+  const handleDeleteUser = (person: Person) => {
+    setPersonDelete(person);
+  };
+
+  useEffect(() => {
+    if (personDelete) {
+      openDeleteUserModal();
+    }
+  }, [personDelete]);
 
   const rows = elements.map((element) => (
     <Table.Tr key={element.id}>
@@ -108,11 +142,11 @@ function page() {
       <Table.Td className={styles.column}>{element.lastName}</Table.Td>
       <Table.Td className={styles.column}>{element.email}</Table.Td>
       <Table.Td className={styles.column}>{element.indexNumber}</Table.Td>
-      <Table.Td className={styles.column}>{element.roles}</Table.Td>
+      <Table.Td className={styles.column}>{element.rolesDisplay}</Table.Td>
       <Table.Td className={styles.column}>
         <div className={styles.crudButtonsContainer}>
           <Tooltip label="Uredi korisnika">
-            <Button color="green">
+            <Button color="green" onClick={() => handleEditUser(element)}>
               <Image
                 src="/assets/svgs/edit.svg"
                 alt="Edit"
@@ -122,7 +156,7 @@ function page() {
             </Button>
           </Tooltip>
           <Tooltip label="Obriši korisnika">
-            <Button color="red">
+            <Button color="red" onClick={() => handleDeleteUser(element)}>
               <Image
                 src="/assets/svgs/trash.svg"
                 alt="Delete"
@@ -166,17 +200,6 @@ function page() {
                 />
               </Button>
             </Tooltip>
-            <Button
-              onClick={() =>
-                notifications.show({
-                  withBorder: true,
-                  title: "Default notification",
-                  message: "Do not forget to star Mantine on GitHub! 🌟",
-                })
-              }
-            >
-              Show notification
-            </Button>
           </div>
 
           <ScrollArea className={styles.borderColor}>
@@ -210,6 +233,21 @@ function page() {
         close={closeAddUserModal}
         creatorRole="ROLE_ADMIN"
         setRefreshUsers={setRefreshUsers}
+      />
+      <EditUserModal
+        opened={openedEditUserModal}
+        open={openEditUserModal}
+        close={closeEditUserModal}
+        creatorRole="ROLE_ADMIN"
+        setRefreshUsers={setRefreshUsers}
+        personEdit={personEdit}
+      />
+      <DeleteUserModal
+        opened={openedDeleteUserModal}
+        open={openDeleteUserModal}
+        close={closeDeleteUserModal}
+        setRefreshUsers={setRefreshUsers}
+        personDelete={personDelete}
       />
       <FilterUsersDrawer
         opened={openedFilterDrawer}
