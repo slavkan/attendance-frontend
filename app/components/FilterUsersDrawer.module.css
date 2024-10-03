@@ -1,0 +1,6 @@
+.checkboxTwoRows{
+  display: flex;
+  flex-direction: row;
+  column-gap: 2em;
+  row-gap: 2em;
+}
