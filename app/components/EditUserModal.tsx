@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { Modal, Button, TextInput, Checkbox } from "@mantine/core";
+import { Modal, Button, TextInput, Checkbox, Tabs } from "@mantine/core";
 import styles from "@/app/components/AddUserModal.module.css";
 import "@mantine/notifications/styles.css";
 import { notifications } from "@mantine/notifications";
-import { Person } from "@/app/utils/types";
+import { Faculty, FacultyPerson, Person } from "@/app/utils/types";
+import { PageLoading } from "@/app/components/PageLoading";
 
 interface EditUserModalProps {
   opened: boolean;
@@ -12,6 +13,8 @@ interface EditUserModalProps {
   creatorRole: string;
   setRefreshUsers: (value: boolean) => void;
   personEdit: Person | null;
+  setPersonEdit: (value: Person | null) => void;
+  faculties: Faculty[] | null;
 }
 
 export default function EditUserModal({
@@ -21,6 +24,8 @@ export default function EditUserModal({
   creatorRole,
   setRefreshUsers,
   personEdit,
+  setPersonEdit,
+  faculties,
 }: EditUserModalProps) {
   const [invalidFirstName, setInvalidFirstName] = useState(false);
   const [invalidLastName, setInvalidLastName] = useState(false);
@@ -30,6 +35,7 @@ export default function EditUserModal({
   const [invalidAcademicTitle, setInvalidAcademicTitle] = useState(false);
 
   const handleClose = () => {
+    setPersonEdit(null);
     setNewPersonForm({
       firstName: "",
       lastName: "",
@@ -46,6 +52,11 @@ export default function EditUserModal({
   };
 
   const [personId, setPersonId] = useState<string | null>(null);
+  const [facultyPerson, setFacultyPerson] = useState<FacultyPerson | null>(
+    null
+  );
+  const [facultyIds, setFacultyIds] = useState<number[]>([]);
+  const [personFacultyBeingConnected, setPersonFacultyBeingConnected] = useState(false);
 
   const [newPersonForm, setNewPersonForm] = useState({
     firstName: "",
@@ -109,8 +120,6 @@ export default function EditUserModal({
     }
   };
 
-  
-
   const onSubmit = async (e: React.ChangeEvent<any>) => {
     e.preventDefault();
     try {
@@ -151,105 +160,172 @@ export default function EditUserModal({
   };
 
 
+  // PersonFaculty connection
+  const handlePersonFacultyConnection = (e: React.ChangeEvent<any>) => {
+    const { id, name, value } = e.target;
+    if (name === "1") {
+      console.log(id, name, value);
+    }
+  };
+
+  useEffect(() => {
+    console.log("Fetching user's faculties");
+    const fetchFaculties = async () => {
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/faculty-person?personId=${personId}`
+        );
+        if (response.ok) {
+          const data: FacultyPerson[] = await response.json();
+          const extractedFacultyIds = data.map((item) => item.faculty.id);
+          setFacultyIds(extractedFacultyIds);
+        } else {
+          console.error("Failed to fetch faculties");
+        }
+      } catch (error) {
+        console.error("Error fetching faculties", error);
+      }
+    };
+
+    if (opened) {
+      fetchFaculties();
+    }
+  }, [personId, opened]);
+
   return (
     <>
       <Modal opened={opened} onClose={handleClose} title="Uredi korisnika">
-        <form onSubmit={onSubmit}>
-          <TextInput
-            data-autofocus
-            value={newPersonForm.firstName}
-            name="firstName"
-            label="Ime"
-            onChange={handleFormInput}
-            error={invalidFirstName ? "Ime mora biti popunjeno" : undefined}
-            mb={10}
-            required
-          />
-          <TextInput
-            value={newPersonForm.lastName}
-            name="lastName"
-            label="Prezime"
-            onChange={handleFormInput}
-            error={invalidLastName ? "Prezime mora biti popunjeno" : undefined}
-            mb={10}
-            required
-          />
-          <TextInput
-            value={newPersonForm.email}
-            name="email"
-            label="Email"
-            onChange={handleFormInput}
-            error={invalidEmail ? "Email je zauzet" : undefined}
-            mb={10}
-            required
-          />
-          <TextInput
-            value={newPersonForm.username}
-            name="username"
-            label="Korisničko ime"
-            onChange={handleFormInput}
-            error={invalidUsername ? "Korisničko ime je zauzeto" : undefined}
-            mb={10}
-            required
-          />
-          <TextInput
-            value={newPersonForm.indexNumber}
-            name="indexNumber"
-            label="Broj indeksa"
-            onChange={handleFormInput}
-            mb={10}
-          />
-          <TextInput
-            value={newPersonForm.academicTitle}
-            name="academicTitle"
-            label="Akademski naziv"
-            onChange={handleFormInput}
-            mb={10}
-          />
-          <div className={styles.checkboxTwoRows}>
-            <div>
-              <Checkbox
-                checked={newPersonForm.admin}
-                mb={10}
-                name="admin"
-                label="Admin"
+        <Button onClick={() => console.log(facultyIds)}></Button>
+        <Tabs defaultValue="editPerson">
+          <Tabs.List mb={10}>
+            <Tabs.Tab value="editPerson">Uređivanje korisnika</Tabs.Tab>
+            <Tabs.Tab value="editPersonFaculty">
+              Povezivanje sa fakultetima
+            </Tabs.Tab>
+          </Tabs.List>
+          <Tabs.Panel value="editPerson">
+            <form onSubmit={onSubmit}>
+              <TextInput
+                data-autofocus
+                value={newPersonForm.firstName}
+                name="firstName"
+                label="Ime"
                 onChange={handleFormInput}
-              />
-              <Checkbox
-                checked={newPersonForm.worker}
+                error={invalidFirstName ? "Ime mora biti popunjeno" : undefined}
                 mb={10}
-                name="worker"
-                label="Radnik"
-                onChange={handleFormInput}
+                required
               />
+              <TextInput
+                value={newPersonForm.lastName}
+                name="lastName"
+                label="Prezime"
+                onChange={handleFormInput}
+                error={
+                  invalidLastName ? "Prezime mora biti popunjeno" : undefined
+                }
+                mb={10}
+                required
+              />
+              <TextInput
+                value={newPersonForm.email}
+                name="email"
+                label="Email"
+                onChange={handleFormInput}
+                error={invalidEmail ? "Email je zauzet" : undefined}
+                mb={10}
+                required
+              />
+              <TextInput
+                value={newPersonForm.username}
+                name="username"
+                label="Korisničko ime"
+                onChange={handleFormInput}
+                error={
+                  invalidUsername ? "Korisničko ime je zauzeto" : undefined
+                }
+                mb={10}
+                required
+              />
+              <TextInput
+                value={newPersonForm.indexNumber}
+                name="indexNumber"
+                label="Broj indeksa"
+                onChange={handleFormInput}
+                mb={10}
+              />
+              <TextInput
+                value={newPersonForm.academicTitle}
+                name="academicTitle"
+                label="Akademski naziv"
+                onChange={handleFormInput}
+                mb={10}
+              />
+              <div className={styles.checkboxTwoRows}>
+                <div>
+                  <Checkbox
+                    checked={newPersonForm.admin}
+                    mb={10}
+                    name="admin"
+                    label="Admin"
+                    onChange={handleFormInput}
+                  />
+                  <Checkbox
+                    checked={newPersonForm.worker}
+                    mb={10}
+                    name="worker"
+                    label="Radnik"
+                    onChange={handleFormInput}
+                  />
+                </div>
+                <div>
+                  <Checkbox
+                    checked={newPersonForm.professor}
+                    mb={10}
+                    name="professor"
+                    label="Profesor"
+                    onChange={handleFormInput}
+                  />
+                  <Checkbox
+                    checked={newPersonForm.student}
+                    mb={10}
+                    name="student"
+                    label="Student"
+                    onChange={handleFormInput}
+                  />
+                </div>
+              </div>
+              <Button type="submit" fullWidth mt={20}>
+                Uredi
+              </Button>
+              {invalidUsername && (
+                <div className={styles.error}>Korisničko ime već postoji</div>
+              )}
+              {invalidEmail && (
+                <div className={styles.error}>Email već postoji</div>
+              )}
+            </form>
+          </Tabs.Panel>
+          <Tabs.Panel value="editPersonFaculty">
+            <h4>{`${newPersonForm.academicTitle} ${newPersonForm.firstName} ${newPersonForm.lastName} ${newPersonForm.indexNumber}`}</h4>
+            <div className={styles.facultyCheckboxContainer}>
+              {faculties && faculties.length > 0 ? (
+                faculties.map((faculty) => (
+                  <div key={faculty.id}>
+                    <Checkbox
+                      name={faculty.id.toString()}
+                      label={`${faculty.name}`}
+                      checked={facultyIds.includes(faculty.id)}
+                      onChange={handlePersonFacultyConnection}
+                    />
+                  </div>
+                ))
+              ) : (
+                <div>Nema fakulteta</div>
+              )}
             </div>
-            <div>
-              <Checkbox
-                checked={newPersonForm.professor}
-                mb={10}
-                name="professor"
-                label="Profesor"
-                onChange={handleFormInput}
-              />
-              <Checkbox
-                checked={newPersonForm.student}
-                mb={10}
-                name="student"
-                label="Student"
-                onChange={handleFormInput}
-              />
-            </div>
-          </div>
-          <Button type="submit" fullWidth mt={20}>
-            Uredi
-          </Button>
-          {invalidUsername && (
-            <div className={styles.error}>Korisničko ime već postoji</div>
-          )}
-          {invalidEmail && (
-            <div className={styles.error}>Email već postoji</div>
-          )}
-        </form>
+          </Tabs.Panel>
+        </Tabs>
+        <PageLoading visible={personFacultyBeingConnected} />
       </Modal>
     </>
   );

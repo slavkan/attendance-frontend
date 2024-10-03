@@ -1,12 +1,16 @@
-import React from 'react'
-import { LoadingOverlay } from '@mantine/core'
+import React from 'react';
+import { LoadingOverlay } from '@mantine/core';
 
-export const PageLoading = () => {
+interface PageLoadingProps {
+  visible: boolean;
+}
+
+export const PageLoading: React.FC<PageLoadingProps> = ({ visible }) => {
   return (
     <LoadingOverlay
-        visible={true}
-        zIndex={1000}
-        overlayProps={{ radius: "sm" }}
-      />
-  )
-}
+      visible={visible}
+      zIndex={1000}
+      overlayProps={{ radius: "sm" }}
+    />
+  );
+};

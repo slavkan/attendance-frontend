@@ -6,7 +6,7 @@ import { Button, Pagination, ScrollArea, Table, Tooltip } from "@mantine/core";
 import React, { useCallback, useEffect, useState } from "react";
 import styles from "./page.module.css";
 import Image from "next/image";
-import { ApiResponsePerson, Person } from "@/app/utils/types";
+import { ApiResponsePerson, Person, Faculty } from "@/app/utils/types";
 import AddUserModal from "@/app/components/AddUserModal";
 import { useDisclosure } from "@mantine/hooks";
 import { getDecodedToken } from "@/app/auth/getDecodedToken";
@@ -21,6 +21,7 @@ function page() {
   const authorized = useCheckRole("ROLE_ADMIN");
 
   const [response, setResponse] = useState<ApiResponsePerson | null>(null);
+  const [faculties, setFaculties] = useState<Faculty[]>([]);
   const [personEdit, setPersonEdit] = useState<Person | null>(null);
   const [personDelete, setPersonDelete] = useState<Person | null>(null);
 
@@ -28,6 +29,7 @@ function page() {
   const [filterQuery, setFilterQuery] = useState<string>("");
 
   const [refreshUsers, setRefreshUsers] = useState<boolean>(false);
+  const [facultiesToBeFetched, setFacultiesToBeFetched] = useState<boolean>(true);
 
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(10);
@@ -79,12 +81,6 @@ function page() {
       if (response.ok) {
         const responseData = await response.json();
         setTotalPages(responseData.totalPages);
-        console.log(
-          "totalPages: ",
-          responseData.totalPages,
-          "currentPage",
-          currentPage
-        );
         if (currentPage > responseData.totalPages) {
           setCurrentPage(responseData.totalPages);
         }
@@ -100,6 +96,42 @@ function page() {
     }
   }, [filterQuery, currentPage]);
 
+  //Fetch faculties
+  const fetchFaculties = useCallback(async () => {
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/faculties`,
+        {
+          method: "GET",
+          headers: {
+            "content-type": "application/json",
+          },
+        }
+      );
+
+      if (response.ok) {
+        const responseData = await response.json();
+        setFaculties(responseData);
+        console.log("FAULCITES FETCHED");
+      } else {
+        const errorData = await response.json();
+        if (errorData) {
+          console.log(errorData);
+        }
+      }
+    } catch (error) {
+      console.log("Error attempting to fetch data: ", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (facultiesToBeFetched) {
+      setFacultiesToBeFetched(false);
+      fetchFaculties();
+    }
+  }, [facultiesToBeFetched]);
+
+
   useEffect(() => {
     if (response) {
       const transformedElements = response.content.map((person) => ({
@@ -109,6 +141,7 @@ function page() {
         username: person.username,
         email: person.email,
         indexNumber: person.indexNumber,
+        academicTitle: person.academicTitle,
         admin: person.admin,
         worker: person.worker,
         professor: person.professor,
@@ -180,7 +213,7 @@ function page() {
   ));
 
   if (authorized === "CHECKING") {
-    return <PageLoading />;
+    return <PageLoading visible={true}/>;
   }
 
   return (
@@ -250,6 +283,8 @@ function page() {
         creatorRole="ROLE_ADMIN"
         setRefreshUsers={setRefreshUsers}
         personEdit={personEdit}
+        setPersonEdit={setPersonEdit}
+        faculties={faculties}
       />
       <DeleteUserModal
         opened={openedDeleteUserModal}
@@ -257,6 +292,7 @@ function page() {
         close={closeDeleteUserModal}
         setRefreshUsers={setRefreshUsers}
         personDelete={personDelete}
+        setPersonDelete={setPersonDelete}
       />
       <FilterUsersDrawer
         opened={openedFilterDrawer}

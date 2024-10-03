@@ -11,6 +11,7 @@ interface DeleteUserModalProps {
   close: () => void;
   setRefreshUsers: (value: boolean) => void;
   personDelete: Person | null;
+  setPersonDelete: (value: Person | null) => void;
 }
 
 export default function DeleteUserModal({
@@ -19,8 +20,10 @@ export default function DeleteUserModal({
   close,
   setRefreshUsers,
   personDelete,
+  setPersonDelete,
 }: DeleteUserModalProps) {
   const handleClose = () => {
+    setPersonDelete(null);
     setDeletePersonForm({
       firstName: "",
       lastName: "",

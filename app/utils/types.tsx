@@ -13,6 +13,18 @@ export interface Person {
   student: boolean;
 }
 
+export interface Faculty {
+  id: number;
+  name: string;
+  abbreviation: string;
+}
+
+export interface FacultyPerson {
+  id: number;
+  faculty: Faculty;
+  person: Person;
+}
+
 export interface Sort {
   empty: boolean;
   sorted: boolean;
