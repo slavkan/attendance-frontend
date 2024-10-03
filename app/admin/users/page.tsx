@@ -79,6 +79,15 @@ function page() {
       if (response.ok) {
         const responseData = await response.json();
         setTotalPages(responseData.totalPages);
+        console.log(
+          "totalPages: ",
+          responseData.totalPages,
+          "currentPage",
+          currentPage
+        );
+        if (currentPage > responseData.totalPages) {
+          setCurrentPage(responseData.totalPages);
+        }
         setResponse(responseData);
       } else {
         const errorData = await response.json();
