@@ -1,5 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { Modal, Button, TextInput, Checkbox, Tabs } from "@mantine/core";
+import {
+  Modal,
+  Button,
+  TextInput,
+  Checkbox,
+  Tabs,
+  Tooltip,
+} from "@mantine/core";
 import styles from "@/app/components/AddUserModal.module.css";
 import "@mantine/notifications/styles.css";
 import { notifications } from "@mantine/notifications";
@@ -56,7 +63,8 @@ export default function EditUserModal({
     null
   );
   const [facultyIds, setFacultyIds] = useState<number[]>([]);
-  const [personFacultyBeingConnected, setPersonFacultyBeingConnected] = useState(false);
+  const [personFacultyBeingConnected, setPersonFacultyBeingConnected] =
+    useState(false);
 
   const [newPersonForm, setNewPersonForm] = useState({
     firstName: "",
@@ -159,12 +167,88 @@ export default function EditUserModal({
     }
   };
 
+  // Generate new password for a user
+  const generatePassword = async (e: React.ChangeEvent<any>) => {
+    e.preventDefault();
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/generate-password/${personId}`,
+        {
+          method: "PATCH",
+          headers: {
+            "content-type": "application/json",
+          },
+        }
+      );
+
+      if (response.ok) {
+        notifications.show({
+          color: "green",
+          withBorder: true,
+          title: "Nova lozinka generirana",
+          message: `Lozinka za korisnika ${newPersonForm.firstName} ${newPersonForm.lastName} je uspješno generirana, podaci za prijavu su poslani na njegov email`,
+        });
+      } else {
+        const errorData = await response.json();
+        if (errorData) {
+          console.log(errorData.message);
+        }
+      }
+    } catch (error) {
+      console.log("Error attempting to login", error);
+    }
+  };
 
   // PersonFaculty connection
-  const handlePersonFacultyConnection = (e: React.ChangeEvent<any>) => {
-    const { id, name, value } = e.target;
-    if (name === "1") {
-      console.log(id, name, value);
+  const handlePersonFacultyConnection = async (
+    e: React.ChangeEvent<any>,
+    isDeleting: boolean
+  ) => {
+    const { name, value } = e.target;
+    const facultyId = parseInt(name);
+
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/faculty-person?personId=${personId}&facultyId=${facultyId}`,
+        {
+          method: isDeleting ? "DELETE" : "POST",
+          headers: {
+            "content-type": "application/json",
+          },
+        }
+      );
+
+      if (response.ok) {
+        // setRefreshUsers(true);
+        setFacultyIds((prevFacultyIds) =>
+          isDeleting
+            ? prevFacultyIds.filter((id) => id !== facultyId)
+            : [...prevFacultyIds, facultyId]
+        );
+        // handleClose();
+        notifications.show({
+          color: isDeleting ? "red" : "green",
+          withBorder: true,
+          title: isDeleting
+            ? "Korisnik uklonjen sa fakulteta"
+            : "Korisnik dodan na fakultet",
+          message: isDeleting
+            ? `Korisnik ${newPersonForm.firstName} ${newPersonForm.lastName} je uspješno uklonjen sa fakulteta`
+            : `Korisnik ${newPersonForm.firstName} ${newPersonForm.lastName} je uspješno dodan na fakultet`,
+        });
+      } else {
+        const errorData = await response.json();
+        if (errorData) {
+          console.log(errorData.message);
+          if (errorData.message === "Email already exists") {
+            setInvalidEmail(true);
+          } else if (errorData.message === "Username already exists") {
+            setInvalidUsername(true);
+          }
+        }
+      }
+    } catch (error) {
+      console.log("Error attempting to login", error);
     }
   };
 
@@ -196,6 +280,7 @@ export default function EditUserModal({
     <>
       <Modal opened={opened} onClose={handleClose} title="Uredi korisnika">
         <Button onClick={() => console.log(facultyIds)}></Button>
+        <Button onClick={() => console.log(newPersonForm)}>User</Button>
         <Tabs defaultValue="editPerson">
           <Tabs.List mb={10}>
             <Tabs.Tab value="editPerson">Uređivanje korisnika</Tabs.Tab>
@@ -297,6 +382,15 @@ export default function EditUserModal({
               <Button type="submit" fullWidth mt={20}>
                 Uredi
               </Button>
+              <Button
+                type="button"
+                fullWidth
+                mt={10}
+                color="gray"
+                onClick={(e) => generatePassword(e)}
+              >
+                Generiraj novu lozinku
+              </Button>
               {invalidUsername && (
                 <div className={styles.error}>Korisničko ime već postoji</div>
               )}
@@ -309,16 +403,21 @@ export default function EditUserModal({
             <h4>{`${newPersonForm.academicTitle} ${newPersonForm.firstName} ${newPersonForm.lastName} ${newPersonForm.indexNumber}`}</h4>
             <div className={styles.facultyCheckboxContainer}>
               {faculties && faculties.length > 0 ? (
-                faculties.map((faculty) => (
-                  <div key={faculty.id}>
-                    <Checkbox
-                      name={faculty.id.toString()}
-                      label={`${faculty.name}`}
-                      checked={facultyIds.includes(faculty.id)}
-                      onChange={handlePersonFacultyConnection}
-                    />
-                  </div>
-                ))
+                faculties.map((faculty) => {
+                  const isConnected = facultyIds.includes(faculty.id);
+                  return (
+                    <div key={faculty.id}>
+                      <Checkbox
+                        name={faculty.id.toString()}
+                        label={`${faculty.name}`}
+                        checked={isConnected}
+                        onChange={(e) =>
+                          handlePersonFacultyConnection(e, isConnected)
+                        }
+                      />
+                    </div>
+                  );
+                })
               ) : (
                 <div>Nema fakulteta</div>
               )}
