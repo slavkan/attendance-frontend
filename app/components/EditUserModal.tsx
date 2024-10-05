@@ -14,6 +14,7 @@ import { Faculty, FacultyPerson, Person } from "@/app/utils/types";
 import { PageLoading } from "@/app/components/PageLoading";
 
 interface EditUserModalProps {
+  token: string | undefined,
   opened: boolean;
   open: () => void;
   close: () => void;
@@ -25,6 +26,7 @@ interface EditUserModalProps {
 }
 
 export default function EditUserModal({
+  token,
   opened,
   open,
   close,
@@ -137,6 +139,7 @@ export default function EditUserModal({
           method: "PUT",
           headers: {
             "content-type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(newPersonForm),
         }
@@ -177,6 +180,7 @@ export default function EditUserModal({
           method: "PATCH",
           headers: {
             "content-type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
         }
       );
@@ -214,6 +218,7 @@ export default function EditUserModal({
           method: isDeleting ? "DELETE" : "POST",
           headers: {
             "content-type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
         }
       );
@@ -257,7 +262,14 @@ export default function EditUserModal({
     const fetchFaculties = async () => {
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/faculty-person?personId=${personId}`
+          `${process.env.NEXT_PUBLIC_API_URL}/faculty-person?personId=${personId}`,
+          {
+            method: "GET",
+            headers: {
+              "content-type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
         );
         if (response.ok) {
           const data: FacultyPerson[] = await response.json();

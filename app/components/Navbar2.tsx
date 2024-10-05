@@ -31,6 +31,7 @@ import { useDisclosure } from "@mantine/hooks";
 // } from '@tabler/icons-react';
 import classes from "./Navbar2.module.css";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 const mockdata = [
   {
@@ -66,6 +67,7 @@ const mockdata = [
 ];
 
 const Navbar2: React.FC = () => {
+  const router = useRouter();
   const [drawerOpened, { toggle: toggleDrawer, close: closeDrawer }] =
     useDisclosure(false);
   const [linksOpened, { toggle: toggleLinks }] = useDisclosure(false);
@@ -85,6 +87,11 @@ const Navbar2: React.FC = () => {
       </Group>
     </UnstyledButton>
   ));
+
+  const handleLogout = () => {
+    localStorage.removeItem('jwtTokenAttendanceApp');
+    router.push('/');
+  };
 
   return (
     <Box pb={30}>
@@ -154,7 +161,7 @@ const Navbar2: React.FC = () => {
 
           <Group visibleFrom="sm">
             <Button>kRakic</Button>
-            <Button variant="default">Odjava</Button>
+            <Button variant="default" onClick={handleLogout}>Odjava</Button>
           </Group>
 
           <Burger

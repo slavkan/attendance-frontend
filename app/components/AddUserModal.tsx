@@ -6,6 +6,7 @@ import { notifications } from "@mantine/notifications";
 import { Person } from "@/app/utils/types";
 
 interface AddUserModalProps {
+  token: string | undefined,
   opened: boolean;
   open: () => void;
   close: () => void;
@@ -14,6 +15,7 @@ interface AddUserModalProps {
 }
 
 export default function AddUserModal({
+  token,
   opened,
   open,
   close,
@@ -98,6 +100,7 @@ export default function AddUserModal({
           method: "POST",
           headers: {
             "content-type": "application/json",
+            "Authorization": `Bearer ${token}`,
           },
           body: JSON.stringify(newPersonForm),
         }

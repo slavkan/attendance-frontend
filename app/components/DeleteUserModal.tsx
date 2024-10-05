@@ -6,6 +6,7 @@ import { Person } from "@/app/utils/types";
 import styles from "@/app/components/DeleteUserModal.module.css";
 
 interface DeleteUserModalProps {
+  token: string | undefined,
   opened: boolean;
   open: () => void;
   close: () => void;
@@ -15,6 +16,7 @@ interface DeleteUserModalProps {
 }
 
 export default function DeleteUserModal({
+  token,
   opened,
   open,
   close,
@@ -81,6 +83,7 @@ export default function DeleteUserModal({
           method: "DELETE",
           headers: {
             "content-type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
         }
       );

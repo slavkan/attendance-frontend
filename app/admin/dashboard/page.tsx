@@ -6,7 +6,7 @@ import { PageLoading } from "@/app/components/PageLoading";
 export default function Page() {
   const authorized = useCheckRole("ROLE_ADMIN");
   if (authorized === "CHECKING") {
-    return <PageLoading />;
+    return <PageLoading visible={true} />;
   }
 
   return (

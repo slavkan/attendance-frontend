@@ -19,6 +19,7 @@ import DeleteUserModal from "@/app/components/DeleteUserModal";
 
 function page() {
   const authorized = useCheckRole("ROLE_ADMIN");
+  const token = getPlainCookie();
 
   const [response, setResponse] = useState<ApiResponsePerson | null>(null);
   const [faculties, setFaculties] = useState<Faculty[]>([]);
@@ -74,6 +75,7 @@ function page() {
           method: "GET",
           headers: {
             "content-type": "application/json",
+            "Authorization": `Bearer ${token}`,
           },
         }
       );
@@ -105,6 +107,7 @@ function page() {
           method: "GET",
           headers: {
             "content-type": "application/json",
+            "Authorization": `Bearer ${token}`,
           },
         }
       );
@@ -112,7 +115,6 @@ function page() {
       if (response.ok) {
         const responseData = await response.json();
         setFaculties(responseData);
-        console.log("FAULCITES FETCHED");
       } else {
         const errorData = await response.json();
         if (errorData) {
@@ -270,6 +272,7 @@ function page() {
       </div>
 
       <AddUserModal
+        token={token}
         opened={openedAddUserModal}
         open={openAddUserModal}
         close={closeAddUserModal}
@@ -277,6 +280,7 @@ function page() {
         setRefreshUsers={setRefreshUsers}
       />
       <EditUserModal
+        token={token}
         opened={openedEditUserModal}
         open={openEditUserModal}
         close={closeEditUserModal}
@@ -287,6 +291,7 @@ function page() {
         faculties={faculties}
       />
       <DeleteUserModal
+        token={token}
         opened={openedDeleteUserModal}
         open={openDeleteUserModal}
         close={closeDeleteUserModal}

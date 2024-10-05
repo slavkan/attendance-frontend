@@ -46,6 +46,7 @@ export default function Home() {
 
       if (response.ok) {
         const responseData = await response.json();
+        console.log("Response data", responseData.message);
         Cookies.set("jwtTokenAttendanceApp", responseData.message, {
           expires: 7,
           sameSite: "None",
