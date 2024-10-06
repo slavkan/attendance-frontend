@@ -7,7 +7,7 @@ import {
   Tabs,
   Tooltip,
 } from "@mantine/core";
-import styles from "@/app/components/AddUserModal.module.css";
+import styles from "@/app/components/adminComponents/AddUserModal.module.css";
 import "@mantine/notifications/styles.css";
 import { notifications } from "@mantine/notifications";
 import { Faculty } from "@/app/utils/types";
@@ -112,7 +112,7 @@ export default function EditFacultyModal({
 
   return (
     <>
-      <Modal opened={opened} onClose={handleClose} title="Uredi korisnika">
+      <Modal opened={opened} onClose={handleClose} title="Uredi fakultet">
         <form onSubmit={onSubmit}>
           <TextInput
             data-autofocus

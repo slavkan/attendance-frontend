@@ -6,7 +6,7 @@ import { Button, Pagination, ScrollArea, Table, Tooltip } from "@mantine/core";
 import React, { useCallback, useEffect, useState } from "react";
 import styles from "./page.module.css";
 import Image from "next/image";
-import { Faculty } from "@/app/utils/types";
+import { Faculty, Study, Subject } from "@/app/utils/types";
 import { useDisclosure } from "@mantine/hooks";
 import { getDecodedToken } from "@/app/auth/getDecodedToken";
 import DecodeCookie from "@/app/auth/DecodeCookie";
@@ -18,50 +18,63 @@ import DeleteUserModal from "@/app/components/adminComponents/DeleteUserModal";
 import AddFacultyModal from "@/app/components/adminComponents/AddFacultyModal";
 import EditFacultyModal from "@/app/components/adminComponents/EditFacultyModal";
 import DeleteFacultyModal from "@/app/components/adminComponents/DeleteFacultyModal";
+import { useSearchParams } from "next/navigation";
+import useCheckRoleAndFaculty from "@/app/auth/useCheckRoleAndFaculty";
+import NavbarWorker from "@/app/components/NavbarWorker";
+import AddStudyModal from "@/app/components/workerComponents/AddStudyModal";
+import EditStudyModal from "@/app/components/workerComponents/EditStudyModal";
+import DeleteStudyModal from "@/app/components/workerComponents/DeleteStudyModal";
+import AddSubjectModal from "@/app/components/workerComponents/AddSubjectModal";
+import EditSubjectModal from "@/app/components/workerComponents/EditSubjectModal";
+import DeleteSubjectModal from "@/app/components/workerComponents/DeleteSubjectModal";
 
 function page() {
-  const authorized = useCheckRole("ROLE_ADMIN");
   const token = getPlainCookie();
 
-  const [response, setResponse] = useState<Faculty[] | null>(null);
-  const [faculties, setFaculties] = useState<Faculty[]>([]);
-  const [facultyEdit, setFacultyEdit] = useState<Faculty | null>(null);
-  const [facultyDelete, setFacultyDelete] = useState<Faculty | null>(null);
+  const searchParams = useSearchParams();
+  const studyId = searchParams?.get("studyId") ?? "";
+  const studyIdNumber = parseInt(studyId);
+  const authorized = useCheckRole("ROLE_WORKER");
+
+  const [response, setResponse] = useState<Subject[] | null>(null);
+  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [subjectEdit, setSubjectEdit] = useState<Subject | null>(null);
+  const [subjectDelete, setSubjectDelete] = useState<Subject | null>(null);
 
   const [elements, setElements] = useState<any[]>([]);
 
-  const [refreshFaculties, setRefreshFaculties] = useState<boolean>(false);
+  const [refreshSubjects, setRefreshSubjects] = useState<boolean>(false);
 
   const [
-    openedAddFacultyModal,
-    { open: openAddFacultyModal, close: closeAddFacultyModal },
+    openedAddSubjectModal,
+    { open: openAddSubjectModal, close: closeAddSubjectModal },
   ] = useDisclosure(false);
   const [
-    openedEditFacultyModal,
-    { open: openEditFacultyModal, close: closeEditFacultyModal },
+    openedEditSubjectModal,
+    { open: openEditSubjectModal, close: closeEditSubjectModal },
   ] = useDisclosure(false);
   const [
-    openedDeleteFacultyModal,
-    { open: openDeleteFacultyModal, close: closeDeleteFacultyModal },
+    openedDeleteSubjectModal,
+    { open: openDeleteSubjectModal, close: closeDeleteSubjectModal },
   ] = useDisclosure(false);
 
   useEffect(() => {
-    setRefreshFaculties(false);
-    if (authorized === "AUTHORIZED" || refreshFaculties) {
+    setRefreshSubjects(false);
+    if (authorized === "AUTHORIZED" || refreshSubjects) {
       fetchData();
     }
-  }, [authorized, refreshFaculties]);
+  }, [authorized, refreshSubjects]);
 
   //Fetch faculties
   const fetchData = useCallback(async () => {
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/faculties`,
+        `${process.env.NEXT_PUBLIC_API_URL}/subjects?studyId=${studyId}`,
         {
           method: "GET",
           headers: {
             "content-type": "application/json",
-            "Authorization": `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );
@@ -78,50 +91,49 @@ function page() {
     } catch (error) {
       console.log("Error attempting to fetch data: ", error);
     }
-  }, []);
-
+  }, [setRefreshSubjects]);
 
   useEffect(() => {
     if (response) {
-      const transformedElements = response.map((faculty) => ({
-        id: faculty.id,
-        name: faculty.name,
-        abbreviation: faculty.abbreviation,
+      const transformedElements = response.map((subject) => ({
+        id: subject.id,
+        name: subject.name,
+        semester: subject.semester,
       }));
       setElements(transformedElements);
     }
   }, [response]);
 
-  // function to trigger openEditFacultyModal and set personEdit
-  const handleEditFaculty = (faculty: Faculty) => {
-    setFacultyEdit(faculty);
+  // function to trigger openEditStudyModal and set personEdit
+  const handleEditStudy = (subject: Subject) => {
+    setSubjectEdit(subject);
   };
 
   useEffect(() => {
-    if (facultyEdit) {
-      openEditFacultyModal();
+    if (subjectEdit) {
+      openEditSubjectModal();
     }
-  }, [facultyEdit]);
+  }, [subjectEdit]);
 
   // function to trigger openDeleteFacultyModal and set personEdit
-  const handleDeleteFaculty = (faculty: Faculty) => {
-    setFacultyDelete(faculty);
+  const handleDeleteSubject = (subject: Subject) => {
+    setSubjectDelete(subject);
   };
 
   useEffect(() => {
-    if (facultyDelete) {
-      openDeleteFacultyModal();
+    if (subjectDelete) {
+      openDeleteSubjectModal();
     }
-  }, [facultyDelete]);
+  }, [subjectDelete]);
 
   const rows = elements.map((element) => (
     <Table.Tr key={element.id}>
       <Table.Td className={styles.column}>{element.name}</Table.Td>
-      <Table.Td className={styles.column}>{element.abbreviation}</Table.Td>
+      <Table.Td className={styles.column}>{element.semester}</Table.Td>
       <Table.Td className={styles.column}>
         <div className={styles.crudButtonsContainer}>
-          <Tooltip label="Uredi fakultet">
-            <Button color="green" onClick={() => handleEditFaculty(element)}>
+          <Tooltip label="Uredi kolegij">
+            <Button color="green" onClick={() => handleEditStudy(element)}>
               <Image
                 src="/assets/svgs/edit.svg"
                 alt="Edit"
@@ -130,8 +142,8 @@ function page() {
               ></Image>
             </Button>
           </Tooltip>
-          <Tooltip label="Obriši fakultet">
-            <Button color="red" onClick={() => handleDeleteFaculty(element)}>
+          <Tooltip label="Obriši kolegij">
+            <Button color="red" onClick={() => handleDeleteSubject(element)}>
               <Image
                 src="/assets/svgs/trash.svg"
                 alt="Delete"
@@ -146,17 +158,17 @@ function page() {
   ));
 
   if (authorized === "CHECKING") {
-    return <PageLoading visible={true}/>;
+    return <PageLoading visible={true} />;
   }
 
   return (
     <div>
-      <Navbar2 />
+      <NavbarWorker token={token} />
       <div className={styles.mainDiv}>
         <div className={styles.pageContent}>
           <div className={styles.addAndFilterBtnContainer}>
-            <Tooltip label="Dodaj fakultet">
-              <Button onClick={openAddFacultyModal}>
+            <Tooltip label="Dodaj kolegij">
+              <Button onClick={openAddSubjectModal}>
                 <Image
                   src="/assets/svgs/plus.svg"
                   alt="Plus Icon"
@@ -171,8 +183,9 @@ function page() {
             <Table striped highlightOnHover withTableBorder withColumnBorders>
               <Table.Thead>
                 <Table.Tr>
-                  <Table.Th className={styles.column}>Ime</Table.Th>
-                  <Table.Th className={styles.column}>Kratica</Table.Th>
+                  <Table.Th className={styles.column}>Naziv kolegija</Table.Th>
+                  <Table.Th className={styles.column}>Semestar</Table.Th>
+                  <Table.Th className={styles.column}></Table.Th>
                 </Table.Tr>
               </Table.Thead>
               <Table.Tbody>{rows}</Table.Tbody>
@@ -182,40 +195,35 @@ function page() {
         <div className={styles.bottomSpace}></div>
       </div>
 
-      <AddFacultyModal
+      <AddSubjectModal
         token={token}
-        opened={openedAddFacultyModal}
-        open={openAddFacultyModal}
-        close={closeAddFacultyModal}
-        creatorRole="ROLE_ADMIN"
-        setRefreshFaculties={setRefreshFaculties}
+        opened={openedAddSubjectModal}
+        open={openAddSubjectModal}
+        close={closeAddSubjectModal}
+        creatorRole="ROLE_WORKER"
+        setRefreshSubjects={setRefreshSubjects}
+        studyId={studyIdNumber}
       />
-      <EditFacultyModal
+      <EditSubjectModal
         token={token}
-        opened={openedEditFacultyModal}
-        open={openEditFacultyModal}
-        close={closeEditFacultyModal}
+        opened={openedEditSubjectModal}
+        open={openEditSubjectModal}
+        close={closeEditSubjectModal}
         creatorRole="ROLE_ADMIN"
-        setRefreshFaculties={setRefreshFaculties}
-        facultyEdit={facultyEdit}
-        setFacultyEdit={setFacultyEdit}
+        setRefreshSubjects={setRefreshSubjects}
+        subjectEdit={subjectEdit}
+        setSubjectEdit={setSubjectEdit}
+        stutyId={studyIdNumber}
       />
-      <DeleteFacultyModal
+      <DeleteSubjectModal
         token={token}
-        opened={openedDeleteFacultyModal}
-        open={openDeleteFacultyModal}
-        close={closeDeleteFacultyModal}
-        setRefreshFaculties={setRefreshFaculties}
-        facultyDelete={facultyDelete}
-        setFacultyDelete={setFacultyDelete}
+        opened={openedDeleteSubjectModal}
+        open={openDeleteSubjectModal}
+        close={closeDeleteSubjectModal}
+        setRefreshSubjects={setRefreshSubjects}
+        subjectDelete={subjectDelete}
+        setSubjectDelete={setSubjectDelete}
       />
-      {/* <FilterUsersDrawer
-        opened={openedFilterDrawer}
-        open={openFilterDrawer}
-        close={closeFilterDrawer}
-        creatorRole="ROLE_ADMIN"
-        setFilterQuery={setFilterQuery}
-      /> */}
     </div>
   );
 }

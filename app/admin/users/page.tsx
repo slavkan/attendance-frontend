@@ -7,15 +7,15 @@ import React, { useCallback, useEffect, useState } from "react";
 import styles from "./page.module.css";
 import Image from "next/image";
 import { ApiResponsePerson, Person, Faculty } from "@/app/utils/types";
-import AddUserModal from "@/app/components/AddUserModal";
+import AddUserModal from "@/app/components/adminComponents/AddUserModal";
 import { useDisclosure } from "@mantine/hooks";
 import { getDecodedToken } from "@/app/auth/getDecodedToken";
 import DecodeCookie from "@/app/auth/DecodeCookie";
 import { getPlainCookie } from "@/app/auth/getPlainCookie";
 import { notifications } from "@mantine/notifications";
-import FilterUsersDrawer from "@/app/components/FilterUsersDrawer";
-import EditUserModal from "@/app/components/EditUserModal";
-import DeleteUserModal from "@/app/components/DeleteUserModal";
+import FilterUsersDrawer from "@/app/components/adminComponents/FilterUsersDrawer";
+import EditUserModal from "@/app/components/adminComponents/EditUserModal";
+import DeleteUserModal from "@/app/components/adminComponents/DeleteUserModal";
 
 function page() {
   const authorized = useCheckRole("ROLE_ADMIN");

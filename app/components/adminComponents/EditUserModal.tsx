@@ -7,7 +7,7 @@ import {
   Tabs,
   Tooltip,
 } from "@mantine/core";
-import styles from "@/app/components/AddUserModal.module.css";
+import styles from "@/app/components/adminComponents/AddUserModal.module.css";
 import "@mantine/notifications/styles.css";
 import { notifications } from "@mantine/notifications";
 import { Faculty, FacultyPerson, Person } from "@/app/utils/types";

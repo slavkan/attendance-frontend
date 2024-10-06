@@ -1,51 +1,53 @@
 import React, { useState } from "react";
 import { Modal, Button, TextInput, Checkbox } from "@mantine/core";
-import styles from "@/app/components/AddUserModal.module.css";
+import styles from "@/app/components/adminComponents/AddUserModal.module.css";
 import "@mantine/notifications/styles.css";
 import { notifications } from "@mantine/notifications";
-import { Faculty } from "@/app/utils/types";
 
-interface AddFacultyModalProps {
+interface AddStudyModalProps {
   token: string | undefined,
   opened: boolean;
   open: () => void;
   close: () => void;
   creatorRole: string;
-  setRefreshFaculties: (value: boolean) => void;
+  setRefreshStudies: (value: boolean) => void;
+  facultyId: number;
 }
 
-export default function AddFacultyModal({
+export default function AddStudyModal({
   token,
   opened,
   open,
   close,
   creatorRole,
-  setRefreshFaculties,
-}: AddFacultyModalProps) {
+  setRefreshStudies,
+  facultyId,
+}: AddStudyModalProps) {
   const [invalidName, setInvalidName] = useState(false);
   const [invalidAbbreviation, setInvalidAbbreviation] = useState(false);
 
   const handleClose = () => {
-    setNewFacultyForm({
+    setNewStudyForm({
       name: "",
-      abbreviation: "",
+      faculty: {
+        id: facultyId
+      }
     });
     close();
   };
 
-  const [newFacultyForm, setNewFacultyForm] = useState({
+  const [newStudyForm, setNewStudyForm] = useState({
     name: "",
-    abbreviation: "",
+      faculty: {
+        id: facultyId
+      }
   });
 
   const handleFormInput = (e: React.ChangeEvent<any>) => {
     const { name, value } = e.target;
     if (name === "name") {
-      setNewFacultyForm({ ...newFacultyForm, name: value });
+      setNewStudyForm({ ...newStudyForm, name: value });
       setInvalidName(false);
-    } else if (name === "abbreviation") {
-      setNewFacultyForm({ ...newFacultyForm, abbreviation: value });
-      setInvalidAbbreviation(false);
     }
   };
 
@@ -55,24 +57,24 @@ export default function AddFacultyModal({
     e.preventDefault();
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/faculties`,
+        `${process.env.NEXT_PUBLIC_API_URL}/study`,
         {
           method: "POST",
           headers: {
             "content-type": "application/json",
             "Authorization": `Bearer ${token}`,
           },
-          body: JSON.stringify(newFacultyForm),
+          body: JSON.stringify(newStudyForm),
         }
       );
 
       if (response.ok) {
-        setRefreshFaculties(true);
+        setRefreshStudies(true);
         handleClose();
         notifications.show({
           withBorder: true,
-          title: "Fakultet dodan",
-          message: `Fakultet ${newFacultyForm.name} je uspješno dodan`,
+          title: "Studij dodan",
+          message: `Studij ${newStudyForm.name} je uspješno dodan`,
         });
       } else {
         const errorData = await response.json();
@@ -87,22 +89,14 @@ export default function AddFacultyModal({
 
   return (
     <>
-      <Modal opened={opened} onClose={handleClose} title="Dodaj fakultet">
+      <Modal opened={opened} onClose={handleClose} title="Dodaj studij">
         <form onSubmit={onSubmit}>
           <TextInput
             data-autofocus
             name="name"
-            label="Ime"
+            label="Naziv studija"
             onChange={handleFormInput}
             error={invalidName ? "Ime mora biti popunjeno" : undefined}
-            mb={10}
-            required
-          />
-          <TextInput
-            name="abbreviation"
-            label="Kratica"
-            onChange={handleFormInput}
-            error={invalidAbbreviation ? "Kratica mora biti popunjena" : undefined}
             mb={10}
             required
           />

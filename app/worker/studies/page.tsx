@@ -6,7 +6,7 @@ import { Button, Pagination, ScrollArea, Table, Tooltip } from "@mantine/core";
 import React, { useCallback, useEffect, useState } from "react";
 import styles from "./page.module.css";
 import Image from "next/image";
-import { Faculty } from "@/app/utils/types";
+import { Faculty, Study } from "@/app/utils/types";
 import { useDisclosure } from "@mantine/hooks";
 import { getDecodedToken } from "@/app/auth/getDecodedToken";
 import DecodeCookie from "@/app/auth/DecodeCookie";
@@ -18,50 +18,61 @@ import DeleteUserModal from "@/app/components/adminComponents/DeleteUserModal";
 import AddFacultyModal from "@/app/components/adminComponents/AddFacultyModal";
 import EditFacultyModal from "@/app/components/adminComponents/EditFacultyModal";
 import DeleteFacultyModal from "@/app/components/adminComponents/DeleteFacultyModal";
+import { useSearchParams } from "next/navigation";
+import useCheckRoleAndFaculty from "@/app/auth/useCheckRoleAndFaculty";
+import NavbarWorker from "@/app/components/NavbarWorker";
+import AddStudyModal from "@/app/components/workerComponents/AddStudyModal";
+import EditStudyModal from "@/app/components/workerComponents/EditStudyModal";
+import DeleteStudyModal from "@/app/components/workerComponents/DeleteStudyModal";
 
 function page() {
-  const authorized = useCheckRole("ROLE_ADMIN");
   const token = getPlainCookie();
 
-  const [response, setResponse] = useState<Faculty[] | null>(null);
-  const [faculties, setFaculties] = useState<Faculty[]>([]);
-  const [facultyEdit, setFacultyEdit] = useState<Faculty | null>(null);
-  const [facultyDelete, setFacultyDelete] = useState<Faculty | null>(null);
+  const searchParams = useSearchParams();
+  const facultyId = searchParams?.get("facultyId") ?? "";
+  const facultyIdNumber = parseInt(facultyId);
+  const authorized = useCheckRoleAndFaculty("ROLE_WORKER", facultyId);
+
+  const [response, setResponse] = useState<Study[] | null>(null);
+  const [studies, setStudies] = useState<Study[]>([]);
+  const [studyEdit, setStudyEdit] = useState<Study | null>(null);
+  const [studyDelete, setStudyDelete] = useState<Study | null>(null);
 
   const [elements, setElements] = useState<any[]>([]);
 
-  const [refreshFaculties, setRefreshFaculties] = useState<boolean>(false);
+  const [refreshStudies, setRefreshStudies] = useState<boolean>(false);
 
   const [
-    openedAddFacultyModal,
-    { open: openAddFacultyModal, close: closeAddFacultyModal },
+    openedAddStudyModal,
+    { open: openAddStudyModal, close: closeAddStudyModal },
   ] = useDisclosure(false);
   const [
-    openedEditFacultyModal,
-    { open: openEditFacultyModal, close: closeEditFacultyModal },
+    openedEditStudyModal,
+    { open: openEditStudyModal, close: closeEditStudyModal },
   ] = useDisclosure(false);
   const [
-    openedDeleteFacultyModal,
-    { open: openDeleteFacultyModal, close: closeDeleteFacultyModal },
+    openedDeleteStudyModal,
+    { open: openDeleteStudyModal, close: closeDeleteStudyModal },
   ] = useDisclosure(false);
 
   useEffect(() => {
-    setRefreshFaculties(false);
-    if (authorized === "AUTHORIZED" || refreshFaculties) {
+    setRefreshStudies(false);
+    if (authorized === "AUTHORIZED" || refreshStudies) {
+      console.log("USE EFFECT REFRESH STUDIES");
       fetchData();
     }
-  }, [authorized, refreshFaculties]);
+  }, [authorized, refreshStudies]);
 
   //Fetch faculties
   const fetchData = useCallback(async () => {
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/faculties`,
+        `${process.env.NEXT_PUBLIC_API_URL}/study?facultyId=${facultyId}`,
         {
           method: "GET",
           headers: {
             "content-type": "application/json",
-            "Authorization": `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );
@@ -78,50 +89,48 @@ function page() {
     } catch (error) {
       console.log("Error attempting to fetch data: ", error);
     }
-  }, []);
-
+  }, [setRefreshStudies]);
 
   useEffect(() => {
     if (response) {
       const transformedElements = response.map((faculty) => ({
         id: faculty.id,
         name: faculty.name,
-        abbreviation: faculty.abbreviation,
+        //abbreviation: faculty.abbreviation,
       }));
       setElements(transformedElements);
     }
   }, [response]);
 
-  // function to trigger openEditFacultyModal and set personEdit
-  const handleEditFaculty = (faculty: Faculty) => {
-    setFacultyEdit(faculty);
+  // function to trigger openEditStudyModal and set personEdit
+  const handleEditStudy = (study: Study) => {
+    setStudyEdit(study);
   };
 
   useEffect(() => {
-    if (facultyEdit) {
-      openEditFacultyModal();
+    if (studyEdit) {
+      openEditStudyModal();
     }
-  }, [facultyEdit]);
+  }, [studyEdit]);
 
   // function to trigger openDeleteFacultyModal and set personEdit
-  const handleDeleteFaculty = (faculty: Faculty) => {
-    setFacultyDelete(faculty);
+  const handleDeleteFaculty = (study: Study) => {
+    setStudyDelete(study);
   };
 
   useEffect(() => {
-    if (facultyDelete) {
-      openDeleteFacultyModal();
+    if (studyDelete) {
+      openDeleteStudyModal();
     }
-  }, [facultyDelete]);
+  }, [studyDelete]);
 
   const rows = elements.map((element) => (
     <Table.Tr key={element.id}>
       <Table.Td className={styles.column}>{element.name}</Table.Td>
-      <Table.Td className={styles.column}>{element.abbreviation}</Table.Td>
       <Table.Td className={styles.column}>
         <div className={styles.crudButtonsContainer}>
-          <Tooltip label="Uredi fakultet">
-            <Button color="green" onClick={() => handleEditFaculty(element)}>
+          <Tooltip label="Uredi studij">
+            <Button color="green" onClick={() => handleEditStudy(element)}>
               <Image
                 src="/assets/svgs/edit.svg"
                 alt="Edit"
@@ -130,7 +139,7 @@ function page() {
               ></Image>
             </Button>
           </Tooltip>
-          <Tooltip label="Obriši fakultet">
+          <Tooltip label="Obriši studij">
             <Button color="red" onClick={() => handleDeleteFaculty(element)}>
               <Image
                 src="/assets/svgs/trash.svg"
@@ -146,17 +155,17 @@ function page() {
   ));
 
   if (authorized === "CHECKING") {
-    return <PageLoading visible={true}/>;
+    return <PageLoading visible={true} />;
   }
 
   return (
     <div>
-      <Navbar2 />
+      <NavbarWorker token={token} />
       <div className={styles.mainDiv}>
         <div className={styles.pageContent}>
           <div className={styles.addAndFilterBtnContainer}>
-            <Tooltip label="Dodaj fakultet">
-              <Button onClick={openAddFacultyModal}>
+            <Tooltip label="Dodaj studij">
+              <Button onClick={openAddStudyModal}>
                 <Image
                   src="/assets/svgs/plus.svg"
                   alt="Plus Icon"
@@ -171,8 +180,8 @@ function page() {
             <Table striped highlightOnHover withTableBorder withColumnBorders>
               <Table.Thead>
                 <Table.Tr>
-                  <Table.Th className={styles.column}>Ime</Table.Th>
-                  <Table.Th className={styles.column}>Kratica</Table.Th>
+                  <Table.Th className={styles.column}>Naziv studija</Table.Th>
+                  <Table.Th className={styles.column}></Table.Th>
                 </Table.Tr>
               </Table.Thead>
               <Table.Tbody>{rows}</Table.Tbody>
@@ -182,40 +191,35 @@ function page() {
         <div className={styles.bottomSpace}></div>
       </div>
 
-      <AddFacultyModal
+      <AddStudyModal
         token={token}
-        opened={openedAddFacultyModal}
-        open={openAddFacultyModal}
-        close={closeAddFacultyModal}
-        creatorRole="ROLE_ADMIN"
-        setRefreshFaculties={setRefreshFaculties}
+        opened={openedAddStudyModal}
+        open={openAddStudyModal}
+        close={closeAddStudyModal}
+        creatorRole="ROLE_WORKER"
+        setRefreshStudies={setRefreshStudies}
+        facultyId={facultyIdNumber}
       />
-      <EditFacultyModal
+      <EditStudyModal
         token={token}
-        opened={openedEditFacultyModal}
-        open={openEditFacultyModal}
-        close={closeEditFacultyModal}
+        opened={openedEditStudyModal}
+        open={openEditStudyModal}
+        close={closeEditStudyModal}
         creatorRole="ROLE_ADMIN"
-        setRefreshFaculties={setRefreshFaculties}
-        facultyEdit={facultyEdit}
-        setFacultyEdit={setFacultyEdit}
+        setRefreshStudies={setRefreshStudies}
+        studyEdit={studyEdit}
+        setStudyEdit={setStudyEdit}
+        facultyId={facultyIdNumber}
       />
-      <DeleteFacultyModal
+      <DeleteStudyModal
         token={token}
-        opened={openedDeleteFacultyModal}
-        open={openDeleteFacultyModal}
-        close={closeDeleteFacultyModal}
-        setRefreshFaculties={setRefreshFaculties}
-        facultyDelete={facultyDelete}
-        setFacultyDelete={setFacultyDelete}
+        opened={openedDeleteStudyModal}
+        open={openDeleteStudyModal}
+        close={closeDeleteStudyModal}
+        setRefreshStudies={setRefreshStudies}
+        studyDelete={studyDelete}
+        setStudyDelete={setStudyDelete}
       />
-      {/* <FilterUsersDrawer
-        opened={openedFilterDrawer}
-        open={openFilterDrawer}
-        close={closeFilterDrawer}
-        creatorRole="ROLE_ADMIN"
-        setFilterQuery={setFilterQuery}
-      /> */}
     </div>
   );
 }

@@ -2,59 +2,56 @@ import React, { useEffect, useState } from "react";
 import { Modal, Button, TextInput, Checkbox } from "@mantine/core";
 import "@mantine/notifications/styles.css";
 import { notifications } from "@mantine/notifications";
-import { Faculty } from "@/app/utils/types";
-import styles from "@/app/components/DeleteUserModal.module.css";
+import { Study } from "@/app/utils/types";
+import styles from "@/app/components/adminComponents/DeleteUserModal.module.css";
 
-interface DeleteFacultyModalProps {
+interface DeleteStudyModalProps {
   token: string | undefined,
   opened: boolean;
   open: () => void;
   close: () => void;
-  setRefreshFaculties: (value: boolean) => void;
-  facultyDelete: Faculty | null;
-  setFacultyDelete: (value: Faculty | null) => void;
+  setRefreshStudies: (value: boolean) => void;
+  studyDelete: Study | null;
+  setStudyDelete: (value: Study | null) => void;
 }
 
-export default function DeleteFacultyModal({
+export default function DeleteStudyModal({
   token,
   opened,
   open,
   close,
-  setRefreshFaculties,
-  facultyDelete,
-  setFacultyDelete,
-}: DeleteFacultyModalProps) {
+  setRefreshStudies,
+  studyDelete,
+  setStudyDelete,
+}: DeleteStudyModalProps) {
   const handleClose = () => {
-    setFacultyDelete(null);
-    setDeleteFacultyForm({
+    setStudyDelete(null);
+    setDeleteStudyForm({
       name: "",
-      abbreviation: "",
     });
     close();
   };
 
-  const [facultyId, setFacultyId] = useState<string | null>(null);
+  const [studyId, setStudyId] = useState<string | null>(null);
 
-  const [deleteFacultyForm, setDeleteFacultyForm] = useState({
+  const [deleteStudyForm, setDeleteStudyForm] = useState({
     name: "",
-    abbreviation: "",
   });
 
   useEffect(() => {
-    if (facultyDelete) {
-      setFacultyId(facultyDelete.id.toString());
-      setDeleteFacultyForm({
-        name: facultyDelete.name || "",
-        abbreviation: facultyDelete.abbreviation || "",
+    if (studyDelete) {
+      setStudyId(studyDelete.id.toString());
+      setDeleteStudyForm({
+        name: studyDelete.name || "",
       });
     }
-  }, [opened, facultyDelete]);
+  }, [opened, studyDelete]);
 
   const onSubmit = async (e: React.ChangeEvent<any>) => {
     e.preventDefault();
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/faculties/${facultyId}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/study/${studyId}`,
         {
           method: "DELETE",
           headers: {
@@ -65,13 +62,13 @@ export default function DeleteFacultyModal({
       );
 
       if (response.ok) {
-        setRefreshFaculties(true);
+        setRefreshStudies(true);
         handleClose();
         notifications.show({
           color: "red",
           withBorder: true,
-          title: "Fakultet obrisan",
-          message: `Fakultet ${deleteFacultyForm.name} je uspješno obrisan`,
+          title: "Studij obrisan",
+          message: `${deleteStudyForm.name} je uspješno obrisan`,
         });
       } else {
         const errorData = await response.json();
@@ -80,7 +77,7 @@ export default function DeleteFacultyModal({
             color: "red",
             withBorder: true,
             title: "Greška",
-            message: `${deleteFacultyForm.name} nije moguće obrisati jer postoje povezane reference`,
+            message: `${deleteStudyForm.name} nije moguće obrisati jer postoje povezane reference`,
           });
         }
         if (errorData) {
@@ -94,9 +91,9 @@ export default function DeleteFacultyModal({
 
   return (
     <>
-      <Modal opened={opened} onClose={handleClose} title="Brisanje fakulteta">
+      <Modal opened={opened} onClose={handleClose} title="Brisanje Studija">
         <form onSubmit={onSubmit}>
-          <p>Da li ste sigurni da želite obrisati fakultet <b>{facultyDelete?.name}</b></p>
+          <p>Da li ste sigurni da želite obrisati studij <b>{studyDelete?.name}</b></p>
           <div className={styles.buttonsContainer}>
             <Button
               fullWidth

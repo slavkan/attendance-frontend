@@ -19,6 +19,19 @@ export interface Faculty {
   abbreviation: string;
 }
 
+export interface Study {
+  id: number;
+  name: string;
+  faculty: Faculty;
+}
+
+export interface Subject {
+  id: number;
+  name: string;
+  semester: number;
+  study: Study;
+}
+
 export interface FacultyPerson {
   id: number;
   faculty: Faculty;

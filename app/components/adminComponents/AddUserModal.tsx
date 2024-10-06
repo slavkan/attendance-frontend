@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Modal, Button, TextInput, Checkbox } from "@mantine/core";
-import styles from "@/app/components/AddUserModal.module.css";
+import styles from "@/app/components/adminComponents/AddUserModal.module.css";
 import "@mantine/notifications/styles.css";
 import { notifications } from "@mantine/notifications";
 import { Person } from "@/app/utils/types";

@@ -18,104 +18,184 @@ import {
   rem,
   useMantineTheme,
 } from "@mantine/core";
-// import { MantineLogo } from '@mantinex/mantine-logo';
 import { useDisclosure } from "@mantine/hooks";
-// import {
-//   IconNotification,
-//   IconCode,
-//   IconBook,
-//   IconChartPie3,
-//   IconFingerprint,
-//   IconCoin,
-//   IconChevronDown,
-// } from '@tabler/icons-react';
 import classes from "./Navbar2.module.css";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { getDecodedToken } from "../auth/getDecodedToken";
+import { Faculty, FacultyPerson, Study } from "../utils/types";
 
-const mockdata = [
-  {
-    // icon: IconCode,
-    title: "Open source",
-    description: "This Pokémon’s cry is very loud and distracting",
-  },
-  {
-    // icon: IconCoin,
-    title: "Free for everyone",
-    description: "The fluid of Smeargle’s tail secretions changes",
-  },
-  {
-    // icon: IconBook,
-    title: "Documentation",
-    description: "Yanma is capable of seeing 360 degrees without",
-  },
-  {
-    // icon: IconFingerprint,
-    title: "Security",
-    description: "The shell’s rounded shape and the grooves on its.",
-  },
-  {
-    // icon: IconChartPie3,
-    title: "Analytics",
-    description: "This Pokémon uses its flying ability to quickly chase",
-  },
-  {
-    // icon: IconNotification,
-    title: "Notifications",
-    description: "Combusken battles with the intensely hot flames it spews",
-  },
-];
+interface NavbarWorkerProps {
+  token: string | undefined;
+}
 
-const NavbarWorker: React.FC = () => {
+const NavbarWorker: React.FC<NavbarWorkerProps> = ({ token }) => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [drawerOpened, { toggle: toggleDrawer, close: closeDrawer }] =
     useDisclosure(false);
   const [linksOpened, { toggle: toggleLinks }] = useDisclosure(false);
+  const [linksOpenedStudies, { toggle: toggleLinksStudies }] = useDisclosure(false);
   const theme = useMantineTheme();
 
-  const links = mockdata.map((item) => (
-    <UnstyledButton className={classes.subLink} key={item.title}>
+  const decodedToken = getDecodedToken();
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (decodedToken) {
+      setUserId(decodedToken.userId);
+    }
+  }, [decodedToken]);
+
+  const handleLogout = () => {
+    localStorage.removeItem("jwtTokenAttendanceApp");
+    router.push("/");
+  };
+
+  const [faculties, setFaculties] = useState<Faculty[]>([]);
+  const [studies, setStudies] = useState<Study[]>([]);
+  const hasFetchedStudies = useRef(false);
+
+  //Fetch worker's faculties
+  const fetchData = useCallback(async () => {
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/faculty-person?personId=${userId}`,
+        {
+          method: "GET",
+          headers: {
+            "content-type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data: FacultyPerson[] = await response.json();
+        const extractedFaculties = data.map((item) => ({
+          id: item.faculty.id,
+          name: item.faculty.name,
+          abbreviation: item.faculty.abbreviation,
+        }));
+        setFaculties(extractedFaculties);
+        // setResponse(responseData);
+      } else {
+        const errorData = await response.json();
+        if (errorData) {
+          console.log(errorData);
+        }
+      }
+    } catch (error) {
+      console.log("Error attempting to fetch data: ", error);
+    }
+  }, [userId]);
+
+  useEffect(() => {
+    if (userId) {
+      fetchData();
+    }
+  }, [userId]);
+
+
+  //Fetch worker's studies
+  const fetchDataStudy = useCallback(async (facultyId: number) => {
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/study?facultyId=${facultyId}`,
+        {
+          method: "GET",
+          headers: {
+            "content-type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data: Study[] = await response.json();
+        console.log(`Studies for faculty ${facultyId}:`, data);
+        setStudies(prevStudies => [...prevStudies, ...data]);
+      } else {
+        const errorData = await response.json();
+        if (errorData) {
+          console.log(errorData);
+        }
+      }
+    } catch (error) {
+      console.log("Error attempting to fetch data: ", error);
+    }
+  }, [userId]);
+
+  useEffect(() => {
+    const fetchAllStudies = async () => {
+      for (const faculty of faculties) {
+        await fetchDataStudy(faculty.id);
+      }
+    };
+
+    if (faculties.length > 0 && !hasFetchedStudies.current) {
+      fetchAllStudies();
+      hasFetchedStudies.current = true;
+    }
+  }, [faculties, fetchDataStudy]);
+
+
+  const linksFaculties = faculties.map((item) => (
+    <UnstyledButton key={item.id} className={classes.subLink}>
+      <a href={`/worker/studies?facultyId=${item.id}`}>
       <Group wrap="nowrap" align="flex-start">
         <div>
           <Text size="sm" fw={500}>
-            {item.title}
+            {item.abbreviation}
           </Text>
           <Text size="xs" c="dimmed">
-            {item.description}
+            {item.name}
           </Text>
         </div>
       </Group>
+      </a>
     </UnstyledButton>
   ));
 
-  const handleLogout = () => {
-    localStorage.removeItem('jwtTokenAttendanceApp');
-    router.push('/');
-  };
+  const linksStudies = studies.map((item) => (
+    <UnstyledButton key={item.id} className={classes.subLink}>
+      <a href={`/worker/subjects?studyId=${item.id}`}>
+      <Group wrap="nowrap" align="flex-start">
+        <div>
+          <Text size="sm" fw={500}>
+            {item.name}
+          </Text>
+          <Text size="xs" c="dimmed">
+            {item.faculty.name}
+          </Text>
+        </div>
+      </Group>
+      </a>
+    </UnstyledButton>
+  ));
 
   return (
     <Box pb={30}>
       <header className={classes.header}>
         <Group justify="space-between" h="100%">
-          <Link 
-            href={"/admin/dashboard"}
-          >
-          <Image
-            src="/assets/images/SUM_logo.png"
-            alt="SUM"
-            width={254}
-            height={120}
-            // width={105}
-            // height={50}
-            style={{ width: "auto", height: "35px" }}
+          <Link href={"/admin/dashboard"}>
+            <Image
+              src="/assets/images/SUM_logo.png"
+              alt="SUM"
+              width={254}
+              height={120}
+              style={{ width: "auto", height: "35px" }}
             />
-            </Link>
+          </Link>
 
           <Group h="100%" gap={0} visibleFrom="sm">
             <Link href="/admin/users" className={classes.link}>
               Korisnici
             </Link>
-            {/* <HoverCard
+
+
+            <HoverCard
               width={600}
               position="bottom"
               radius="md"
@@ -126,7 +206,7 @@ const NavbarWorker: React.FC = () => {
                 <a href="#" className={classes.link}>
                   <Center inline>
                     <Box component="span" mr={5}>
-                      Features
+                      Studiji
                     </Box>
                     <Image
                       src="/assets/svgs/chevron-down.svg"
@@ -141,16 +221,55 @@ const NavbarWorker: React.FC = () => {
 
               <HoverCard.Dropdown style={{ overflow: "hidden" }}>
                 <Group justify="space-between" px="md">
-                  <Text fw={500}>Features</Text>
+                  <Text fw={500}>Studiji</Text>
                 </Group>
 
                 <Divider my="sm" />
 
                 <SimpleGrid cols={2} spacing={0}>
-                  {links}
+                  {linksFaculties}
                 </SimpleGrid>
               </HoverCard.Dropdown>
-            </HoverCard> */}
+            </HoverCard>
+
+            <HoverCard
+              width={600}
+              position="bottom"
+              radius="md"
+              shadow="md"
+              withinPortal
+            >
+              <HoverCard.Target>
+                <a href="#" className={classes.link}>
+                  <Center inline>
+                    <Box component="span" mr={5}>
+                      Kolegiji
+                    </Box>
+                    <Image
+                      src="/assets/svgs/chevron-down.svg"
+                      alt="Settings"
+                      width={30}
+                      height={30}
+                      style={{ width: "0.9rem", height: "0.9rem" }}
+                    />
+                  </Center>
+                </a>
+              </HoverCard.Target>
+
+              <HoverCard.Dropdown style={{ overflow: "hidden" }}>
+                <Group justify="space-between" px="md">
+                  <Text fw={500}>Kolegiji</Text>
+                </Group>
+
+                <Divider my="sm" />
+
+                <SimpleGrid cols={2} spacing={0}>
+                  {linksStudies}
+                </SimpleGrid>
+              </HoverCard.Dropdown>
+            </HoverCard>
+
+
             <Link href="/admin/faculties" className={classes.link}>
               Fakulteti
             </Link>
@@ -161,7 +280,9 @@ const NavbarWorker: React.FC = () => {
 
           <Group visibleFrom="sm">
             <Button>kRakic</Button>
-            <Button variant="default" onClick={handleLogout}>Odjava</Button>
+            <Button variant="default" onClick={handleLogout}>
+              Odjava
+            </Button>
           </Group>
 
           <Burger
@@ -190,7 +311,7 @@ const NavbarWorker: React.FC = () => {
           <UnstyledButton className={classes.link} onClick={toggleLinks}>
             <Center inline>
               <Box component="span" mr={5}>
-                Features
+                Studiji
               </Box>
               <Image
                 src="/assets/svgs/chevron-down.svg"
@@ -201,7 +322,22 @@ const NavbarWorker: React.FC = () => {
               />
             </Center>
           </UnstyledButton>
-          <Collapse in={linksOpened}>{links}</Collapse>
+          <Collapse in={linksOpened}>{linksFaculties}</Collapse>
+          <UnstyledButton className={classes.link} onClick={toggleLinksStudies}>
+            <Center inline>
+              <Box component="span" mr={5}>
+                Kolegiji
+              </Box>
+              <Image
+                src="/assets/svgs/chevron-down.svg"
+                alt="Settings"
+                width={30}
+                height={30}
+                style={{ width: "0.9rem", height: "0.9rem" }}
+              />
+            </Center>
+          </UnstyledButton>
+          <Collapse in={linksOpenedStudies}>{linksStudies}</Collapse>
           <a href="#" className={classes.link}>
             Learn
           </a>
@@ -219,6 +355,6 @@ const NavbarWorker: React.FC = () => {
       </Drawer>
     </Box>
   );
-}
+};
 
 export default NavbarWorker;
