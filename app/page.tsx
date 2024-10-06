@@ -108,9 +108,9 @@ export default function Home() {
         </form>
       </div>
       <div className={styles.addCredsContainer}>
-        <Button variant="light" color="gray" onClick={() => quickCredsSet("sRamljak", "j91KfHPq")}>sRamljak</Button>
-        <Button variant="light" color="gray"></Button>
-        <Button variant="light" color="gray"></Button>
+        <Button variant="light" color="gray" onClick={() => quickCredsSet("sRamljak", "ovWd484J")}>sRamljak</Button>
+        <Button variant="light" color="gray" onClick={() => quickCredsSet("kRakic", "Q1Q10wrj")}>kRakic</Button>
+        <Button variant="light" color="gray" onClick={() => quickCredsSet("jJagoda", "DmrJp95p")}>jJagoda</Button>
         <Button variant="light" color="gray"></Button>
       </div>
     </div>

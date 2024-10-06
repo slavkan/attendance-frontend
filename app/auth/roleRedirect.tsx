@@ -2,7 +2,7 @@ import { useRouter } from "next/navigation";
 
 const roleToRouteMap = {
   ROLE_ADMIN: "/admin/dashboard",
-  ROLE_WORKER: "/worker",
+  ROLE_WORKER: "/worker/dashboard",
   ROLE_PROFESSOR: "/professor",
   ROLE_STUDENT: "/student",
 } as const;
