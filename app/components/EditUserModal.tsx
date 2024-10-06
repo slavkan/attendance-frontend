@@ -291,8 +291,6 @@ export default function EditUserModal({
   return (
     <>
       <Modal opened={opened} onClose={handleClose} title="Uredi korisnika">
-        <Button onClick={() => console.log(facultyIds)}></Button>
-        <Button onClick={() => console.log(newPersonForm)}>User</Button>
         <Tabs defaultValue="editPerson">
           <Tabs.List mb={10}>
             <Tabs.Tab value="editPerson">Uređivanje korisnika</Tabs.Tab>

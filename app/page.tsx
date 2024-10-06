@@ -75,6 +75,13 @@ export default function Home() {
     }
   };
 
+  const quickCredsSet = (username: string, password: string) => {
+    setLoginCred({
+      username: username,
+      password: password,
+    });
+  };
+
   return (
     <div className={styles.page}>
       <div className={styles.loginWidth}>
@@ -82,6 +89,7 @@ export default function Home() {
           <Fieldset legend="Prijava">
             <TextInput
               name="username"
+              value={loginCred.username}
               label="Korisničko ime"
               onChange={handleFormInput}
               error={invalidUsername ? "Netočno korisničko ime" : undefined}
@@ -89,6 +97,7 @@ export default function Home() {
             />
             <PasswordInput
               name="password"
+              value={loginCred.password}
               label="Lozinka"
               onChange={handleFormInput}
               error={invalidPassword ? "Netočna lozinka" : undefined}
@@ -97,6 +106,12 @@ export default function Home() {
             <Button type="submit">Prijavi se</Button>
           </Fieldset>
         </form>
+      </div>
+      <div className={styles.addCredsContainer}>
+        <Button variant="light" color="gray" onClick={() => quickCredsSet("sRamljak", "j91KfHPq")}>sRamljak</Button>
+        <Button variant="light" color="gray"></Button>
+        <Button variant="light" color="gray"></Button>
+        <Button variant="light" color="gray"></Button>
       </div>
     </div>
   );

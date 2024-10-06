@@ -19,6 +19,15 @@
   background-color: var(--mantine-primary-color-1);
 }
 
+.addCredsContainer{
+  position: fixed;
+  bottom: 5px;
+  right: 5px;
+  display: flex;
+  flex-direction: column;
+  row-gap: 5px;
+}
+
 @media (max-width: 350px) {
   .loginWidth{
     width: 90%;
