@@ -26,12 +26,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { getDecodedToken } from "../auth/getDecodedToken";
 import { Faculty, FacultyPerson, Study } from "../utils/types";
 
-interface NavbarWorkerProps {
+interface NavbarStudentProps {
   token: string | undefined;
   studiesChanged: boolean;
 }
 
-const NavbarWorker: React.FC<NavbarWorkerProps> = ({
+const NavbarStudent: React.FC<NavbarStudentProps> = ({
   token,
   studiesChanged,
 }) => {
@@ -42,7 +42,8 @@ const NavbarWorker: React.FC<NavbarWorkerProps> = ({
 
   const [linksOpenedUsers, { toggle: toggleLinksUsers }] = useDisclosure(false);
   const [linksOpened, { toggle: toggleLinks }] = useDisclosure(false);
-  const [linksOpenedStudies, { toggle: toggleLinksStudies }] = useDisclosure(false);
+  const [linksOpenedStudies, { toggle: toggleLinksStudies }] =
+    useDisclosure(false);
 
   const theme = useMantineTheme();
 
@@ -204,7 +205,7 @@ const NavbarWorker: React.FC<NavbarWorkerProps> = ({
     <Box pb={30}>
       <header className={classes.header}>
         <Group justify="space-between" h="100%">
-          <Link href={"/worker/dashboard"}>
+          <Link href={"/student/dashboard"}>
             <Image
               src="/assets/images/SUM_logo.png"
               alt="SUM"
@@ -215,11 +216,9 @@ const NavbarWorker: React.FC<NavbarWorkerProps> = ({
           </Link>
 
           <Group h="100%" gap={0} visibleFrom="sm">
-            {/* <Link href="/worker/users" className={classes.link}>
-              Korisnici
-            </Link> */}
-
-            
+            <Link href="/student/scan" className={classes.link}>
+              Skeniraj
+            </Link>
 
             <HoverCard
               width={600}
@@ -334,7 +333,6 @@ const NavbarWorker: React.FC<NavbarWorkerProps> = ({
                 </SimpleGrid>
               </HoverCard.Dropdown>
             </HoverCard>
-
           </Group>
 
           <Group visibleFrom="sm">
@@ -363,6 +361,10 @@ const NavbarWorker: React.FC<NavbarWorkerProps> = ({
       >
         <ScrollArea h={`calc(100vh - ${rem(80)})`} mx="-md">
           <Divider my="sm" />
+
+          <Link href="/student/scan" className={classes.link}>
+            Skeniraj
+          </Link>
 
           <UnstyledButton className={classes.link} onClick={toggleLinksUsers}>
             <Center inline>
@@ -430,4 +432,4 @@ const NavbarWorker: React.FC<NavbarWorkerProps> = ({
   );
 };
 
-export default NavbarWorker;
+export default NavbarStudent;

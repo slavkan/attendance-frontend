@@ -3,8 +3,8 @@ import { useRouter } from "next/navigation";
 const roleToRouteMap = {
   ROLE_ADMIN: "/admin/dashboard",
   ROLE_WORKER: "/worker/dashboard",
-  ROLE_PROFESSOR: "/professor",
-  ROLE_STUDENT: "/student",
+  ROLE_PROFESSOR: "/professor/dashboard",
+  ROLE_STUDENT: "/student/dashboard",
 } as const;
 
 type Role = keyof typeof roleToRouteMap;

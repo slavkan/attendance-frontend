@@ -1,0 +1,15 @@
+.accordionWrapper{
+  display: flex;
+  justify-content: center;
+}
+
+.accordionWidth{
+  width: 50%;
+}
+
+/* Bellow 1400px  */
+@media (max-width: 1400px) {
+  .accordionWidth{
+    width: 80%;
+  }
+}

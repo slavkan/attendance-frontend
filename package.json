@@ -16,6 +16,7 @@
     "@mantine/modals": "^7.13.1",
     "@mantine/notifications": "^7.13.1",
     "@mantine/spotlight": "^7.13.1",
+    "@yudiel/react-qr-scanner": "^2.0.8",
     "dayjs": "^1.11.13",
     "js-cookie": "^3.0.5",
     "jwt-decode": "^4.0.0",

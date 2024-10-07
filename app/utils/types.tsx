@@ -1,4 +1,5 @@
 export interface Person {
+  faculty: any;
   id: number;
   firstName: string;
   lastName: string;

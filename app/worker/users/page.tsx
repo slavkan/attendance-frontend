@@ -91,7 +91,7 @@ function page() {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/persons/filter?page=${
           currentPage - 1
-        }&size=${pageSize}&facultyId=${1}${filterQuery}`,
+        }&size=${pageSize}&facultyId=${facultyId}${filterQuery}`,
         {
           method: "GET",
           headers: {

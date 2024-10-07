@@ -1,0 +1,11 @@
+.pageWrapper{
+  height: 80vh;
+}
+
+
+.cameraWrapper {
+  display: flex;
+  justify-content: center;
+  position: relative;
+
+}
