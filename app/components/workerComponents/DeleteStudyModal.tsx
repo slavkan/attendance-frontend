@@ -11,6 +11,7 @@ interface DeleteStudyModalProps {
   open: () => void;
   close: () => void;
   setRefreshStudies: (value: boolean) => void;
+  setStudiesChanged: (value: boolean) => void;
   studyDelete: Study | null;
   setStudyDelete: (value: Study | null) => void;
 }
@@ -21,6 +22,7 @@ export default function DeleteStudyModal({
   open,
   close,
   setRefreshStudies,
+  setStudiesChanged,
   studyDelete,
   setStudyDelete,
 }: DeleteStudyModalProps) {
@@ -63,6 +65,7 @@ export default function DeleteStudyModal({
 
       if (response.ok) {
         setRefreshStudies(true);
+        setStudiesChanged(true);
         handleClose();
         notifications.show({
           color: "red",

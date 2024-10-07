@@ -28,15 +28,22 @@ import { Faculty, FacultyPerson, Study } from "../utils/types";
 
 interface NavbarWorkerProps {
   token: string | undefined;
+  studiesChanged: boolean;
 }
 
-const NavbarWorker: React.FC<NavbarWorkerProps> = ({ token }) => {
+const NavbarWorker: React.FC<NavbarWorkerProps> = ({
+  token,
+  studiesChanged,
+}) => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [drawerOpened, { toggle: toggleDrawer, close: closeDrawer }] =
     useDisclosure(false);
+
+  const [linksOpenedUsers, { toggle: toggleLinksUsers }] = useDisclosure(false);
   const [linksOpened, { toggle: toggleLinks }] = useDisclosure(false);
   const [linksOpenedStudies, { toggle: toggleLinksStudies }] = useDisclosure(false);
+
   const theme = useMantineTheme();
 
   const decodedToken = getDecodedToken();
@@ -97,35 +104,37 @@ const NavbarWorker: React.FC<NavbarWorkerProps> = ({ token }) => {
     }
   }, [userId]);
 
-
   //Fetch worker's studies
-  const fetchDataStudy = useCallback(async (facultyId: number) => {
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/study?facultyId=${facultyId}`,
-        {
-          method: "GET",
-          headers: {
-            "content-type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+  const fetchDataStudy = useCallback(
+    async (facultyId: number) => {
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/study?facultyId=${facultyId}`,
+          {
+            method: "GET",
+            headers: {
+              "content-type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
-      if (response.ok) {
-        const data: Study[] = await response.json();
-        console.log(`Studies for faculty ${facultyId}:`, data);
-        setStudies(prevStudies => [...prevStudies, ...data]);
-      } else {
-        const errorData = await response.json();
-        if (errorData) {
-          console.log(errorData);
+        if (response.ok) {
+          const data: Study[] = await response.json();
+          console.log(`Studies for faculty ${facultyId}:`, data);
+          setStudies((prevStudies) => [...prevStudies, ...data]);
+        } else {
+          const errorData = await response.json();
+          if (errorData) {
+            console.log(errorData);
+          }
         }
+      } catch (error) {
+        console.log("Error attempting to fetch data: ", error);
       }
-    } catch (error) {
-      console.log("Error attempting to fetch data: ", error);
-    }
-  }, [userId]);
+    },
+    [userId]
+  );
 
   useEffect(() => {
     const fetchAllStudies = async () => {
@@ -140,20 +149,36 @@ const NavbarWorker: React.FC<NavbarWorkerProps> = ({ token }) => {
     }
   }, [faculties, fetchDataStudy]);
 
+  const linksFacultiesForUsers = faculties.map((item) => (
+    <UnstyledButton key={item.id} className={classes.subLink}>
+      <a href={`/worker/users?facultyId=${item.id}`}>
+        <Group wrap="nowrap" align="flex-start">
+          <div>
+            <Text size="sm" fw={500}>
+              {item.abbreviation}
+            </Text>
+            <Text size="xs" c="dimmed">
+              {item.name}
+            </Text>
+          </div>
+        </Group>
+      </a>
+    </UnstyledButton>
+  ));
 
   const linksFaculties = faculties.map((item) => (
     <UnstyledButton key={item.id} className={classes.subLink}>
       <a href={`/worker/studies?facultyId=${item.id}`}>
-      <Group wrap="nowrap" align="flex-start">
-        <div>
-          <Text size="sm" fw={500}>
-            {item.abbreviation}
-          </Text>
-          <Text size="xs" c="dimmed">
-            {item.name}
-          </Text>
-        </div>
-      </Group>
+        <Group wrap="nowrap" align="flex-start">
+          <div>
+            <Text size="sm" fw={500}>
+              {item.abbreviation}
+            </Text>
+            <Text size="xs" c="dimmed">
+              {item.name}
+            </Text>
+          </div>
+        </Group>
       </a>
     </UnstyledButton>
   ));
@@ -161,16 +186,16 @@ const NavbarWorker: React.FC<NavbarWorkerProps> = ({ token }) => {
   const linksStudies = studies.map((item) => (
     <UnstyledButton key={item.id} className={classes.subLink}>
       <a href={`/worker/subjects?studyId=${item.id}`}>
-      <Group wrap="nowrap" align="flex-start">
-        <div>
-          <Text size="sm" fw={500}>
-            {item.name}
-          </Text>
-          <Text size="xs" c="dimmed">
-            {item.faculty.name}
-          </Text>
-        </div>
-      </Group>
+        <Group wrap="nowrap" align="flex-start">
+          <div>
+            <Text size="sm" fw={500}>
+              {item.name}
+            </Text>
+            <Text size="xs" c="dimmed">
+              {item.faculty.name}
+            </Text>
+          </div>
+        </Group>
       </a>
     </UnstyledButton>
   ));
@@ -190,10 +215,48 @@ const NavbarWorker: React.FC<NavbarWorkerProps> = ({ token }) => {
           </Link>
 
           <Group h="100%" gap={0} visibleFrom="sm">
-            <Link href="/admin/users" className={classes.link}>
+            {/* <Link href="/worker/users" className={classes.link}>
               Korisnici
-            </Link>
+            </Link> */}
 
+            
+
+            <HoverCard
+              width={600}
+              position="bottom"
+              radius="md"
+              shadow="md"
+              withinPortal
+            >
+              <HoverCard.Target>
+                <a href="#" className={classes.link}>
+                  <Center inline>
+                    <Box component="span" mr={5}>
+                      Korisnici
+                    </Box>
+                    <Image
+                      src="/assets/svgs/chevron-down.svg"
+                      alt="Settings"
+                      width={30}
+                      height={30}
+                      style={{ width: "0.9rem", height: "0.9rem" }}
+                    />
+                  </Center>
+                </a>
+              </HoverCard.Target>
+
+              <HoverCard.Dropdown style={{ overflow: "hidden" }}>
+                <Group justify="space-between" px="md">
+                  <Text fw={500}>Korisnici</Text>
+                </Group>
+
+                <Divider my="sm" />
+
+                <SimpleGrid cols={2} spacing={0}>
+                  {linksFacultiesForUsers}
+                </SimpleGrid>
+              </HoverCard.Dropdown>
+            </HoverCard>
 
             <HoverCard
               width={600}
@@ -259,6 +322,9 @@ const NavbarWorker: React.FC<NavbarWorkerProps> = ({ token }) => {
               <HoverCard.Dropdown style={{ overflow: "hidden" }}>
                 <Group justify="space-between" px="md">
                   <Text fw={500}>Kolegiji</Text>
+                  {studiesChanged && (
+                    <Text size="sm">Ovježi stranicu da vidiš promjene</Text>
+                  )}
                 </Group>
 
                 <Divider my="sm" />
@@ -269,13 +335,6 @@ const NavbarWorker: React.FC<NavbarWorkerProps> = ({ token }) => {
               </HoverCard.Dropdown>
             </HoverCard>
 
-
-            <Link href="/admin/faculties" className={classes.link}>
-              Fakulteti
-            </Link>
-            <a href="#" className={classes.link}>
-              Academy
-            </a>
           </Group>
 
           <Group visibleFrom="sm">
@@ -305,9 +364,22 @@ const NavbarWorker: React.FC<NavbarWorkerProps> = ({ token }) => {
         <ScrollArea h={`calc(100vh - ${rem(80)})`} mx="-md">
           <Divider my="sm" />
 
-          <a href="#" className={classes.link}>
-            Home
-          </a>
+          <UnstyledButton className={classes.link} onClick={toggleLinksUsers}>
+            <Center inline>
+              <Box component="span" mr={5}>
+                Korisnici
+              </Box>
+              <Image
+                src="/assets/svgs/chevron-down.svg"
+                alt="Settings"
+                width={30}
+                height={30}
+                style={{ width: "0.9rem", height: "0.9rem" }}
+              />
+            </Center>
+          </UnstyledButton>
+          <Collapse in={linksOpenedUsers}>{linksFacultiesForUsers}</Collapse>
+
           <UnstyledButton className={classes.link} onClick={toggleLinks}>
             <Center inline>
               <Box component="span" mr={5}>
@@ -323,6 +395,7 @@ const NavbarWorker: React.FC<NavbarWorkerProps> = ({ token }) => {
             </Center>
           </UnstyledButton>
           <Collapse in={linksOpened}>{linksFaculties}</Collapse>
+
           <UnstyledButton className={classes.link} onClick={toggleLinksStudies}>
             <Center inline>
               <Box component="span" mr={5}>
@@ -338,12 +411,12 @@ const NavbarWorker: React.FC<NavbarWorkerProps> = ({ token }) => {
             </Center>
           </UnstyledButton>
           <Collapse in={linksOpenedStudies}>{linksStudies}</Collapse>
-          <a href="#" className={classes.link}>
+          {/* <a href="#" className={classes.link}>
             Learn
           </a>
           <a href="#" className={classes.link}>
             Academy
-          </a>
+          </a> */}
 
           <Divider my="sm" />
 

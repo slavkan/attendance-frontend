@@ -41,6 +41,7 @@ function page() {
   const [elements, setElements] = useState<any[]>([]);
 
   const [refreshStudies, setRefreshStudies] = useState<boolean>(false);
+  const [studiesChanged, setStudiesChanged] = useState<boolean>(false);
 
   const [
     openedAddStudyModal,
@@ -160,7 +161,7 @@ function page() {
 
   return (
     <div>
-      <NavbarWorker token={token} />
+      <NavbarWorker token={token} studiesChanged={studiesChanged}/>
       <div className={styles.mainDiv}>
         <div className={styles.pageContent}>
           <div className={styles.addAndFilterBtnContainer}>
@@ -198,6 +199,7 @@ function page() {
         close={closeAddStudyModal}
         creatorRole="ROLE_WORKER"
         setRefreshStudies={setRefreshStudies}
+        setStudiesChanged={setStudiesChanged}
         facultyId={facultyIdNumber}
       />
       <EditStudyModal
@@ -207,6 +209,7 @@ function page() {
         close={closeEditStudyModal}
         creatorRole="ROLE_ADMIN"
         setRefreshStudies={setRefreshStudies}
+        setStudiesChanged={setStudiesChanged}
         studyEdit={studyEdit}
         setStudyEdit={setStudyEdit}
         facultyId={facultyIdNumber}
@@ -217,6 +220,7 @@ function page() {
         open={openDeleteStudyModal}
         close={closeDeleteStudyModal}
         setRefreshStudies={setRefreshStudies}
+        setStudiesChanged={setStudiesChanged}
         studyDelete={studyDelete}
         setStudyDelete={setStudyDelete}
       />

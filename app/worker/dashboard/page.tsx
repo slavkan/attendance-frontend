@@ -17,6 +17,7 @@ export default function Page() {
     <div>
       <NavbarWorker 
         token={token}
+        studiesChanged={false}
       />
       <div>Radnik</div>
     </div>

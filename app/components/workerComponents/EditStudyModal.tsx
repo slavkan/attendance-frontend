@@ -19,6 +19,7 @@ interface EditStudyModalProps {
   close: () => void;
   creatorRole: string;
   setRefreshStudies: (value: boolean) => void;
+  setStudiesChanged: (value: boolean) => void;
   studyEdit: Study | null;
   setStudyEdit: (value: Study | null) => void;
   facultyId: number;
@@ -31,6 +32,7 @@ export default function EditStudyModal({
   close,
   creatorRole,
   setRefreshStudies,
+  setStudiesChanged,
   studyEdit,
   setStudyEdit,
   facultyId,
@@ -95,6 +97,7 @@ export default function EditStudyModal({
 
       if (response.ok) {
         setRefreshStudies(true);
+        setStudiesChanged(true);
         handleClose();
         notifications.show({
           color: "green",

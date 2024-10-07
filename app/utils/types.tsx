@@ -26,6 +26,7 @@ export interface Study {
 }
 
 export interface Subject {
+  subject: any;
   id: number;
   name: string;
   semester: number;
@@ -35,6 +36,12 @@ export interface Subject {
 export interface FacultyPerson {
   id: number;
   faculty: Faculty;
+  person: Person;
+}
+
+export interface SubjectPerson {
+  id: number;
+  subject: Subject;
   person: Person;
 }
 

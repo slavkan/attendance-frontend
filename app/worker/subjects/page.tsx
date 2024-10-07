@@ -95,11 +95,14 @@ function page() {
 
   useEffect(() => {
     if (response) {
-      const transformedElements = response.map((subject) => ({
-        id: subject.id,
-        name: subject.name,
-        semester: subject.semester,
-      }));
+      const transformedElements = response
+        .map((subject) => ({
+          id: subject.id,
+          name: subject.name,
+          semester: subject.semester,
+        }))
+        .sort((a, b) => a.semester - b.semester); // Sort by semester
+
       setElements(transformedElements);
     }
   }, [response]);
@@ -163,7 +166,7 @@ function page() {
 
   return (
     <div>
-      <NavbarWorker token={token} />
+      <NavbarWorker token={token} studiesChanged={false} />
       <div className={styles.mainDiv}>
         <div className={styles.pageContent}>
           <div className={styles.addAndFilterBtnContainer}>

@@ -11,6 +11,7 @@ interface AddStudyModalProps {
   close: () => void;
   creatorRole: string;
   setRefreshStudies: (value: boolean) => void;
+  setStudiesChanged: (value: boolean) => void;
   facultyId: number;
 }
 
@@ -21,6 +22,7 @@ export default function AddStudyModal({
   close,
   creatorRole,
   setRefreshStudies,
+  setStudiesChanged,
   facultyId,
 }: AddStudyModalProps) {
   const [invalidName, setInvalidName] = useState(false);
@@ -70,6 +72,7 @@ export default function AddStudyModal({
 
       if (response.ok) {
         setRefreshStudies(true);
+        setStudiesChanged(true);
         handleClose();
         notifications.show({
           withBorder: true,
