@@ -4,7 +4,6 @@ import useCheckRole from "@/app/auth/useCheckRole";
 import { PageLoading } from "@/app/components/PageLoading";
 import { getDecodedToken } from "@/app/auth/getDecodedToken";
 import { getPlainCookie } from "@/app/auth/getPlainCookie";
-import NavbarStudent from "@/app/components/NavbarStudent";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Faculty,
@@ -13,6 +12,8 @@ import {
   SubjectPerson,
 } from "@/app/utils/types";
 import { Accordion, Button, Text } from "@mantine/core";
+import Link from "next/link";
+import NavbarProfessor from "@/app/components/NavbarProfessor";
 
 export default function Page() {
   const token = getPlainCookie();
@@ -103,11 +104,18 @@ export default function Page() {
                 return (
                   <div key={subjectPerson.subject.id}>
                     {currentSemester !== previousSemester && (
-                      <Text fw={700} >{currentSemester}. semestar</Text>
+                      <Text fw={700}>{currentSemester}. semestar</Text>
                     )}
-                    <Button variant="default" mb={5}>
-                      {subjectPerson.subject.name}
-                    </Button>
+                    <Link
+                      href={{
+                        pathname: "/professor/subject",
+                        query: { subjectId: subjectPerson.subject.id },
+                      }}
+                    >
+                      <Button variant="default" mb={5}>
+                        {subjectPerson.subject.name}
+                      </Button>
+                    </Link>
                   </div>
                 );
               })}
@@ -138,7 +146,7 @@ export default function Page() {
 
   return (
     <div>
-      <NavbarStudent token={token} studiesChanged={false} />
+      <NavbarProfessor token={token} studiesChanged={false} />
       <div className={styles.accordionWrapper}>
         <div className={styles.accordionWidth}>
           <Accordion variant="separated">{items}</Accordion>

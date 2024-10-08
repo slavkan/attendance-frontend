@@ -110,7 +110,7 @@ export default function Home() {
         <Button variant="light" color="gray" onClick={() => quickCredsSet("sRamljak", "ovWd484J")}>sRamljak</Button>
         <Button variant="light" color="gray" onClick={() => quickCredsSet("kRakic", "Q1Q10wrj")}>kRakic</Button>
         <Button variant="light" color="gray" onClick={() => quickCredsSet("jJagoda", "DmrJp95p")}>jJagoda</Button>
-        <Button variant="light" color="gray"></Button>
+        <Button variant="light" color="gray" onClick={() => quickCredsSet("mMarkic", "x33ARUs2")}>mMarkic</Button>
       </div>
     </div>
   );

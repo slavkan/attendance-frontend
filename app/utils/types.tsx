@@ -46,6 +46,16 @@ export interface SubjectPerson {
   person: Person;
 }
 
+export interface ClassSession {
+  id: number;
+  state: string;
+  startTime: Date;
+  endTime: Date;
+  subject: Subject;
+  person: Person;
+  //DOVRŠITI
+}
+
 export interface Sort {
   empty: boolean;
   sorted: boolean;

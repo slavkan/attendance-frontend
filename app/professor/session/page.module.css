@@ -1,0 +1,67 @@
+.mainDiv{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.pageContent{
+    width: 80%;
+    margin-bottom: 10px;
+}
+
+.headingRowContainer{
+    display: flex;
+    margin-bottom: 10px;
+    column-gap: 30px;
+}
+
+.tableAndCodesContainer{
+    display: flex;
+    justify-content: space-between;
+}
+
+.codesContainer{
+    width: 30%;
+    display: flex;
+    justify-content: end;
+}
+
+.borderColor{
+    width: 70%;
+}
+
+.addAndFilterBtnContainer{
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    justify-content: start;
+    column-gap: 10px;
+}
+
+.column{
+    min-width: 150px;
+}
+
+.columnSmall{
+    min-width: 80px;
+    text-align: center;
+}
+
+.columnMedium{
+    min-width: 100px;
+    text-align: center;
+}
+
+.borderColor{
+    border: 1px solid var(--mantine-color-gray-3);
+}
+
+.bottomSpace{
+    margin-bottom: 10px;
+}
+
+.crudButtonsContainer{
+    display: flex;
+    column-gap: 10px;
+}

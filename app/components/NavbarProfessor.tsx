@@ -26,12 +26,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { getDecodedToken } from "../auth/getDecodedToken";
 import { Faculty, FacultyPerson, Study } from "../utils/types";
 
-interface NavbarStudentProps {
+interface NavbarProfessorProps {
   token: string | undefined;
   studiesChanged: boolean;
 }
 
-const NavbarStudent: React.FC<NavbarStudentProps> = ({
+const NavbarProfessor: React.FC<NavbarProfessorProps> = ({
   token,
   studiesChanged,
 }) => {
@@ -42,8 +42,7 @@ const NavbarStudent: React.FC<NavbarStudentProps> = ({
 
   const [linksOpenedUsers, { toggle: toggleLinksUsers }] = useDisclosure(false);
   const [linksOpened, { toggle: toggleLinks }] = useDisclosure(false);
-  const [linksOpenedStudies, { toggle: toggleLinksStudies }] =
-    useDisclosure(false);
+  const [linksOpenedStudies, { toggle: toggleLinksStudies }] = useDisclosure(false);
 
   const theme = useMantineTheme();
 
@@ -205,7 +204,7 @@ const NavbarStudent: React.FC<NavbarStudentProps> = ({
     <Box pb={30}>
       <header className={classes.header}>
         <Group justify="space-between" h="100%">
-          <Link href={"/student/dashboard"}>
+          <Link href={"/professor/dashboard"}>
             <Image
               src="/assets/images/SUM_logo.png"
               alt="SUM"
@@ -216,9 +215,11 @@ const NavbarStudent: React.FC<NavbarStudentProps> = ({
           </Link>
 
           <Group h="100%" gap={0} visibleFrom="sm">
-            <Link href="/student/scan" className={classes.link}>
-              Skeniraj
-            </Link>
+            {/* <Link href="/worker/users" className={classes.link}>
+              Korisnici
+            </Link> */}
+
+            
 
             <HoverCard
               width={600}
@@ -333,6 +334,7 @@ const NavbarStudent: React.FC<NavbarStudentProps> = ({
                 </SimpleGrid>
               </HoverCard.Dropdown>
             </HoverCard>
+
           </Group>
 
           <Group visibleFrom="sm">
@@ -361,10 +363,6 @@ const NavbarStudent: React.FC<NavbarStudentProps> = ({
       >
         <ScrollArea h={`calc(100vh - ${rem(80)})`} mx="-md">
           <Divider my="sm" />
-
-          <Link href="/student/scan" className={classes.link}>
-            Skeniraj
-          </Link>
 
           <UnstyledButton className={classes.link} onClick={toggleLinksUsers}>
             <Center inline>
@@ -432,4 +430,4 @@ const NavbarStudent: React.FC<NavbarStudentProps> = ({
   );
 };
 
-export default NavbarStudent;
+export default NavbarProfessor;

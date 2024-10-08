@@ -121,7 +121,7 @@ const NavbarWorker: React.FC<NavbarWorkerProps> = ({
 
         if (response.ok) {
           const data: Study[] = await response.json();
-          console.log(`Studies for faculty ${facultyId}:`, data);
+          // console.log(`Studies for faculty ${facultyId}:`, data);
           setStudies((prevStudies) => [...prevStudies, ...data]);
         } else {
           const errorData = await response.json();

@@ -3,25 +3,26 @@ import { useRouter } from "next/navigation";
 
 import { roleRedirect } from "./roleRedirect";
 import { getDecodedToken } from "./getDecodedToken";
-import { Faculty, FacultyPerson } from "../utils/types";
+import { Subject, SubjectPerson } from "../utils/types";
 import { getPlainCookie } from "./getPlainCookie";
 
-const useCheckRoleAndFaculty = (requiredRole: string, facultyId: string) => {
-  const [authorizedFaculty, setAuthorizedFaculty] = useState("CHECKING");
+const useCheckRoleAndSubject = (requiredRole: string, subjectId: string) => {
+  const [authorizedSubject, setAuthorizedSubject] = useState("CHECKING");
   const [authorized, setAuthorized] = useState("CHECKING");
+  const [subjectName, setSubjectName] = useState("");
   const router = useRouter();
 
   const decodedToken = getDecodedToken();
   const token = getPlainCookie();
   const userId = decodedToken ? decodedToken.userId : "";
 
-  const [faculties, setFaculties] = useState<Faculty[]>([]);
+  const [subjectPerson, setSubjectPerson] = useState<SubjectPerson[]>([]);
 
-  //Fetch worker's faculties
+  //Fetch worker's subjectPerson
   const fetchData = useCallback(async () => {
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/faculty-person?personId=${userId}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/subject-person?personId=${userId}`,
         {
           method: "GET",
           headers: {
@@ -32,13 +33,14 @@ const useCheckRoleAndFaculty = (requiredRole: string, facultyId: string) => {
       );
 
       if (response.ok) {
-        const data: FacultyPerson[] = await response.json();
-        const extractedFaculties = data.map((item) => ({
-          id: item.faculty.id,
-          name: item.faculty.name,
-          abbreviation: item.faculty.abbreviation,
+        const data: SubjectPerson[] = await response.json();
+        console.log(data);
+        const extractedSubjectPerson = data.map((item) => ({
+          id: item.id,
+          subject: item.subject,
+          person: item.person,
         }));
-        setFaculties(extractedFaculties);
+        setSubjectPerson(extractedSubjectPerson);
       } else {
         const errorData = await response.json();
         if (errorData) {
@@ -56,12 +58,15 @@ const useCheckRoleAndFaculty = (requiredRole: string, facultyId: string) => {
     }
   }, [userId]);
 
-
   useEffect(() => {
-    if (faculties.length > 0) {
-      // if facultyId is inside faculties array set authorizedFaculty to "AUTHORIZED"
-      if (faculties.some((faculty) => faculty.id === Number(facultyId))) {
-        setAuthorizedFaculty("AUTHORIZED");
+    if (subjectPerson.length > 0) {
+      // if subjectId is inside subjects array set authorizedSubject to "AUTHORIZED"
+      const foundSubjectPerson = subjectPerson.find(
+        (subjectPersonItem) => subjectPersonItem.subject.id === Number(subjectId)
+      );
+      if (foundSubjectPerson) {
+        setSubjectName(foundSubjectPerson.subject.name);
+        setAuthorizedSubject("AUTHORIZED");
       } else {
         if (requiredRole === "ROLE_ADMIN") {
           router.push("/admin/dashboard");
@@ -76,10 +81,10 @@ const useCheckRoleAndFaculty = (requiredRole: string, facultyId: string) => {
         }
       }
     }
-  }, [facultyId, faculties]);
+  }, [subjectId, subjectPerson]);
 
   useEffect(() => {
-    if (authorizedFaculty !== "CHECKING") {
+    if (authorizedSubject !== "CHECKING") {
       if (decodedToken && decodedToken.roles.includes(requiredRole)) {
         setAuthorized("AUTHORIZED");
       } else if (decodedToken) {
@@ -88,9 +93,9 @@ const useCheckRoleAndFaculty = (requiredRole: string, facultyId: string) => {
         router.push("/");
       }
     }
-  }, [requiredRole, router, authorizedFaculty]);
+  }, [requiredRole, router, authorizedSubject]);
 
-  return authorized;
+  return { authorized, subjectName };
 };
 
-export default useCheckRoleAndFaculty;
+export default useCheckRoleAndSubject;

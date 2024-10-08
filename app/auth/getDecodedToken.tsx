@@ -10,6 +10,7 @@ export const getDecodedToken = () => {
       return {
         roles: decodedToken.roles,
         userId: decodedToken.userId,
+        username: decodedToken.sub,
       };
     }
 

@@ -1,40 +1,44 @@
 "use client";
-import useCheckRole from "@/app/auth/useCheckRole";
-import Navbar2 from "@/app/components/Navbar2";
 import { PageLoading } from "@/app/components/PageLoading";
-import { Button, Pagination, ScrollArea, Table, Tooltip } from "@mantine/core";
+import { Button, ScrollArea, Table, Tooltip, Text } from "@mantine/core";
 import React, { useCallback, useEffect, useState } from "react";
 import styles from "./page.module.css";
 import Image from "next/image";
-import { Faculty, Study } from "@/app/utils/types";
+import { ClassSession, Study } from "@/app/utils/types";
 import { useDisclosure } from "@mantine/hooks";
-import { getDecodedToken } from "@/app/auth/getDecodedToken";
-import DecodeCookie from "@/app/auth/DecodeCookie";
 import { getPlainCookie } from "@/app/auth/getPlainCookie";
-import { notifications } from "@mantine/notifications";
-import FilterUsersDrawer from "@/app/components/adminComponents/FilterUsersDrawer";
-import EditUserModal from "@/app/components/adminComponents/EditUserModal";
-import DeleteUserModal from "@/app/components/adminComponents/DeleteUserModal";
-import AddFacultyModal from "@/app/components/adminComponents/AddFacultyModal";
-import EditFacultyModal from "@/app/components/adminComponents/EditFacultyModal";
-import DeleteFacultyModal from "@/app/components/adminComponents/DeleteFacultyModal";
 import { useSearchParams } from "next/navigation";
-import useCheckRoleAndFaculty from "@/app/auth/useCheckRoleAndFaculty";
 import NavbarWorker from "@/app/components/NavbarWorker";
 import AddStudyModal from "@/app/components/workerComponents/AddStudyModal";
 import EditStudyModal from "@/app/components/workerComponents/EditStudyModal";
 import DeleteStudyModal from "@/app/components/workerComponents/DeleteStudyModal";
+import useCheckRoleAndSubject from "@/app/auth/useCheckRoleAndSubject";
+import NavbarProfessor from "@/app/components/NavbarProfessor";
+import {
+  usePrintDate,
+  usePrintTime,
+  usePrintDateTime,
+} from "@/app/utils/usePrintDateTime";
+import StartClassSessionModal from "@/app/components/professorComponents/StartClassSessionModal";
+import { getDecodedToken } from "@/app/auth/getDecodedToken";
+import Link from "next/link";
 
 function page() {
   const token = getPlainCookie();
 
   const searchParams = useSearchParams();
-  const facultyId = searchParams?.get("facultyId") ?? "";
-  const facultyIdNumber = parseInt(facultyId);
-  const authorized = useCheckRoleAndFaculty("ROLE_WORKER", facultyId);
+  const subjectId = searchParams?.get("subjectId") ?? "";
+  const subjectIdNumber = parseInt(subjectId);
+  const { authorized, subjectName } = useCheckRoleAndSubject(
+    "ROLE_PROFESSOR",
+    subjectId
+  );
 
-  const [response, setResponse] = useState<Study[] | null>(null);
-  const [studies, setStudies] = useState<Study[]>([]);
+  const decodedToken = getDecodedToken();
+  const userId = decodedToken ? decodedToken.userId : "";
+
+  const [response, setResponse] = useState<ClassSession[] | null>(null);
+  // const [classSessions, setClassSessions] = useState<Study[]>([]);
   const [studyEdit, setStudyEdit] = useState<Study | null>(null);
   const [studyDelete, setStudyDelete] = useState<Study | null>(null);
 
@@ -44,8 +48,11 @@ function page() {
   const [studiesChanged, setStudiesChanged] = useState<boolean>(false);
 
   const [
-    openedAddStudyModal,
-    { open: openAddStudyModal, close: closeAddStudyModal },
+    openedStartNewClassSessionModal,
+    {
+      open: openStartNewClassSessionModal,
+      close: closeStartNewClassSessionModal,
+    },
   ] = useDisclosure(false);
   const [
     openedEditStudyModal,
@@ -59,7 +66,6 @@ function page() {
   useEffect(() => {
     setRefreshStudies(false);
     if (authorized === "AUTHORIZED" || refreshStudies) {
-      // console.log("USE EFFECT REFRESH STUDIES");
       fetchData();
     }
   }, [authorized, refreshStudies]);
@@ -68,7 +74,7 @@ function page() {
   const fetchData = useCallback(async () => {
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/study?facultyId=${facultyId}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/class-sessions?subjectId=${subjectId}`,
         {
           method: "GET",
           headers: {
@@ -80,6 +86,7 @@ function page() {
 
       if (response.ok) {
         const responseData = await response.json();
+        console.log(responseData);
         setResponse(responseData);
       } else {
         const errorData = await response.json();
@@ -90,23 +97,34 @@ function page() {
     } catch (error) {
       console.log("Error attempting to fetch data: ", error);
     }
-  }, [setRefreshStudies]);
+  }, [setRefreshStudies, subjectId]);
 
   useEffect(() => {
     if (response) {
-      const transformedElements = response.map((faculty) => ({
-        id: faculty.id,
-        name: faculty.name,
-        //abbreviation: faculty.abbreviation,
-      }));
+      const transformedElements = response
+        .map((classSession) => ({
+          id: classSession.id,
+          startTime: classSession.startTime,
+          endTime: classSession.endTime,
+          status:
+            classSession.state === "IN_PROGRESS"
+              ? "U tijeku"
+              : classSession.state === "PAUSED"
+              ? "Pauzirano"
+              : "Završeno",
+        }))
+        .sort(
+          (a, b) =>
+            new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+        );
       setElements(transformedElements);
     }
   }, [response]);
 
   // function to trigger openEditStudyModal and set personEdit
-  const handleEditStudy = (study: Study) => {
-    setStudyEdit(study);
-  };
+  // const handleContinueClassSession = (study: Study) => {
+  //   setStudyEdit(study);
+  // };
 
   useEffect(() => {
     if (studyEdit) {
@@ -127,19 +145,36 @@ function page() {
 
   const rows = elements.map((element) => (
     <Table.Tr key={element.id}>
-      <Table.Td className={styles.column}>{element.name}</Table.Td>
+      <Table.Td className={styles.column}>
+        {usePrintDate(element.startTime)}{" "}
+        <b>{usePrintTime(element.startTime)}</b>
+      </Table.Td>
+      <Table.Td className={styles.column}>
+        {usePrintDate(element.endTIme)} <b>{usePrintTime(element.endTIme)}</b>
+      </Table.Td>
+      <Table.Td className={styles.column}>{element.status}</Table.Td>
       <Table.Td className={styles.column}>
         <div className={styles.crudButtonsContainer}>
-          <Tooltip label="Uredi studij">
-            <Button color="green" onClick={() => handleEditStudy(element)}>
-              <Image
-                src="/assets/svgs/edit.svg"
-                alt="Edit"
-                width={24}
-                height={24}
-              ></Image>
-            </Button>
-          </Tooltip>
+          {element.status !== "Završeno" && (
+            <Tooltip label="Nastavi predavanje">
+              <Link
+                href={{
+                  pathname: "/professor/session",
+                  query: { sessionId: element.id, subjectId: subjectId },
+                }}
+              >
+                <Button color="blue">
+                  <Image
+                    src="/assets/svgs/play.svg"
+                    alt="Edit"
+                    width={24}
+                    height={24}
+                  ></Image>
+                </Button>
+              </Link>
+            </Tooltip>
+          )}
+
           <Tooltip label="Obriši studij">
             <Button color="red" onClick={() => handleDeleteFaculty(element)}>
               <Image
@@ -161,12 +196,15 @@ function page() {
 
   return (
     <div>
-      <NavbarWorker token={token} studiesChanged={studiesChanged}/>
+      <NavbarProfessor token={token} studiesChanged={studiesChanged} />
+      <Text size="xl" ta="center" mb={20}>
+        {subjectName} - Sva predavanja
+      </Text>
       <div className={styles.mainDiv}>
         <div className={styles.pageContent}>
           <div className={styles.addAndFilterBtnContainer}>
-            <Tooltip label="Dodaj studij">
-              <Button onClick={openAddStudyModal}>
+            <Tooltip label="Pokreni novo predavanje">
+              <Button onClick={openStartNewClassSessionModal}>
                 <Image
                   src="/assets/svgs/plus.svg"
                   alt="Plus Icon"
@@ -181,7 +219,9 @@ function page() {
             <Table striped highlightOnHover withTableBorder withColumnBorders>
               <Table.Thead>
                 <Table.Tr>
-                  <Table.Th className={styles.column}>Naziv studija</Table.Th>
+                  <Table.Th className={styles.column}>Start</Table.Th>
+                  <Table.Th className={styles.column}>End</Table.Th>
+                  <Table.Th className={styles.column}>Status</Table.Th>
                   <Table.Th className={styles.column}></Table.Th>
                 </Table.Tr>
               </Table.Thead>
@@ -192,37 +232,14 @@ function page() {
         <div className={styles.bottomSpace}></div>
       </div>
 
-      <AddStudyModal
+      <StartClassSessionModal
         token={token}
-        opened={openedAddStudyModal}
-        open={openAddStudyModal}
-        close={closeAddStudyModal}
-        creatorRole="ROLE_WORKER"
-        setRefreshStudies={setRefreshStudies}
-        setStudiesChanged={setStudiesChanged}
-        facultyId={facultyIdNumber}
-      />
-      <EditStudyModal
-        token={token}
-        opened={openedEditStudyModal}
-        open={openEditStudyModal}
-        close={closeEditStudyModal}
-        creatorRole="ROLE_ADMIN"
-        setRefreshStudies={setRefreshStudies}
-        setStudiesChanged={setStudiesChanged}
-        studyEdit={studyEdit}
-        setStudyEdit={setStudyEdit}
-        facultyId={facultyIdNumber}
-      />
-      <DeleteStudyModal
-        token={token}
-        opened={openedDeleteStudyModal}
-        open={openDeleteStudyModal}
-        close={closeDeleteStudyModal}
-        setRefreshStudies={setRefreshStudies}
-        setStudiesChanged={setStudiesChanged}
-        studyDelete={studyDelete}
-        setStudyDelete={setStudyDelete}
+        opened={openedStartNewClassSessionModal}
+        open={openStartNewClassSessionModal}
+        close={closeStartNewClassSessionModal}
+        creatorRole="ROLE_PROFESSOR"
+        subjectId={subjectId}
+        professorId={userId}
       />
     </div>
   );

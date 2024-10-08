@@ -218,7 +218,7 @@ function page() {
 
           if (response.ok) {
             const data: Study[] = await response.json();
-            console.log(`Studies for faculty ${facultyId}:`, data);
+            // console.log(`Studies for faculty ${facultyId}:`, data);
             setStudies((prevStudies) => {
               const newStudies = data.filter(
                 (newStudy) => !prevStudies.some((study) => study.id === newStudy.id)
