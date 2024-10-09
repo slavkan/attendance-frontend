@@ -1,11 +1,11 @@
 "use client";
 import { PageLoading } from "@/app/components/PageLoading";
 import { Button, ScrollArea, Table, Tooltip, Text } from "@mantine/core";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import styles from "./page.module.css";
 import Image from "next/image";
-import { ClassSession, Study } from "@/app/utils/types";
-import { useDisclosure } from "@mantine/hooks";
+import { ClassSession, SessionMessage, Study } from "@/app/utils/types";
+import { useDisclosure, useTimeout } from "@mantine/hooks";
 import { getPlainCookie } from "@/app/auth/getPlainCookie";
 import { useSearchParams } from "next/navigation";
 import NavbarWorker from "@/app/components/NavbarWorker";
@@ -23,8 +23,20 @@ import StartClassSessionModal from "@/app/components/professorComponents/StartCl
 import { getDecodedToken } from "@/app/auth/getDecodedToken";
 import Link from "next/link";
 
+import { over } from "stompjs";
+import SockJS from "sockjs-client";
+import { useGenerateRandomString } from "@/app/utils/useGenerateRandomString";
+import {QRCodeSVG} from 'qrcode.react';
+import { notifications } from "@mantine/notifications";
+
+
+
+// var stompClient:any = null;
 function page() {
   const token = getPlainCookie();
+  
+  const stompClientRef = useRef<any>(null);
+  const [isConnected, setIsConnected] = useState(false);
 
   const searchParams = useSearchParams();
   const subjectId = searchParams?.get("subjectId") ?? "";
@@ -42,6 +54,8 @@ function page() {
   const [classSession, setClassSession] = useState<ClassSession>();
   const [studyEdit, setStudyEdit] = useState<Study | null>(null);
   const [studyDelete, setStudyDelete] = useState<Study | null>(null);
+
+  const [QRcode, setQRcode] = useState<string>("");
 
   const [elements, setElements] = useState<any[]>([]);
 
@@ -71,11 +85,11 @@ function page() {
     }
   }, [authorized, refreshStudies]);
 
-  //Fetch faculties
+  //Fetch Session info
   const fetchData = useCallback(async () => {
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/class-sessions/${subjectId}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/class-sessions/${sessionId}`,
         {
           method: "GET",
           headers: {
@@ -87,7 +101,7 @@ function page() {
 
       if (response.ok) {
         const responseData: ClassSession = await response.json();
-        console.log(responseData);
+        console.log("RESPOSNE OK", responseData);
         setClassSession(responseData);
       } else {
         const errorData = await response.json();
@@ -99,6 +113,12 @@ function page() {
       console.log("Error attempting to fetch data: ", error);
     }
   }, [setRefreshStudies, subjectId]);
+
+
+
+  
+
+
 
   useEffect(() => {
     if (response) {
@@ -122,27 +142,100 @@ function page() {
     }
   }, [response]);
 
-  // function to trigger openEditStudyModal and set personEdit
-  // const handleContinueClassSession = (study: Study) => {
-  //   setStudyEdit(study);
-  // };
 
-  useEffect(() => {
-    if (studyEdit) {
-      openEditStudyModal();
+  // Generate QR code
+  const generateNewQrCode = useCallback(async () => {
+    clear();
+    console.log("TIMER CLEARED");
+    const newCode = useGenerateRandomString(sessionId);
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/class-sessions/change-qr-code?classSessionId=${sessionId}&newCode=${newCode}`,
+        {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const responseData: ClassSession = await response.json();
+        start();
+        console.log("NEW TIMER STARTED");
+        setQRcode(responseData.codeForArrival);
+        setClassSession(responseData);
+      } else {
+        const errorData = await response.json();
+        if (errorData) {
+          console.log(errorData);
+        }
+      }
+    } catch (error) {
+      console.log("Error attempting to fetch data: ", error);
     }
-  }, [studyEdit]);
+  }, [setRefreshStudies, subjectId]);
 
-  // function to trigger openDeleteFacultyModal and set personEdit
-  const handleDeleteFaculty = (study: Study) => {
-    setStudyDelete(study);
+
+
+  const { start, clear } = useTimeout(() => generateNewQrCode(), 2000);
+
+  // Web Socket
+  useEffect(() => {
+    const socket = new SockJS(`${process.env.NEXT_PUBLIC_API_URL}/ws`);
+    const stompClient = over(socket);
+    stompClientRef.current = stompClient;
+
+    const connectPrivateUrl = `/user/${sessionId}/private`;
+  
+    stompClient.connect(
+      {},
+      () => {
+        stompClient.subscribe(
+          connectPrivateUrl,
+          onPrivateMessage
+        );
+      },
+      (error) => {
+        console.log("Error connecting to web socket: ", error);
+      }
+    );
+  }, [sessionId]);
+  
+  const sendValue = () => {
+    if (stompClientRef.current) {
+      const sendMessage = {
+        classSessionId: 1,
+        subjectName: "",
+        personId: 1,
+        code: "1_5mr9ketfno",
+        firstName: "",
+        lastName: "",
+        arrivalTime: "",
+        departureTime: "",
+        message: "",
+      };
+      stompClientRef.current.send(`/app/class-session`, {}, JSON.stringify(sendMessage));
+    } else {
+      console.log("stompClient is not initialized");
+    }
   };
 
-  useEffect(() => {
-    if (studyDelete) {
-      openDeleteStudyModal();
-    }
-  }, [studyDelete]);
+
+  const onPrivateMessage = (payload:any) => {
+    console.log(payload);
+    var payloadData = JSON.parse(payload.body);
+    console.log("Message received: ", payloadData);
+    notifications.show({
+      withBorder: true,
+      title: "Scan",
+      message: `Skeniro si se`,
+    });
+  };
+
+
+
 
   const rows = elements.map((element) => (
     <Table.Tr key={element.id}>
@@ -176,7 +269,7 @@ function page() {
             </Tooltip>
           )}
 
-          <Tooltip label="Obriši studij">
+          {/* <Tooltip label="Obriši studij">
             <Button color="red" onClick={() => handleDeleteFaculty(element)}>
               <Image
                 src="/assets/svgs/trash.svg"
@@ -185,7 +278,7 @@ function page() {
                 height={24}
               ></Image>
             </Button>
-          </Tooltip>
+          </Tooltip> */}
         </div>
       </Table.Td>
     </Table.Tr>
@@ -198,22 +291,21 @@ function page() {
   return (
     <div>
       <NavbarProfessor token={token} studiesChanged={studiesChanged} />
-      
-      
+
       <div className={styles.mainDiv}>
         <div className={styles.pageContent}>
-        <div className={styles.headingRowContainer}>
-      <Text size="xl" ta="center" fw={500} mb={20}>
-        {classSession?.subject.name}
-      </Text>
-      <Text size="xl" ta="center" mb={20}>
-      {classSession?.person.academicTitle} {classSession?.person.firstName} {classSession?.person.lastName}
-      </Text>
-      <Text size="xl" ta="center" mb={20}>
-      {usePrintDate(classSession?.startTime)}
-      </Text>
-      
-      </div>
+          <div className={styles.headingRowContainer}>
+            <Text size="xl" ta="center" fw={500} mb={20}>
+              {classSession?.subject.name}
+            </Text>
+            <Text size="xl" ta="center" mb={20}>
+              {classSession?.person.academicTitle}{" "}
+              {classSession?.person.firstName} {classSession?.person.lastName}
+            </Text>
+            <Text size="xl" ta="center" mb={20}>
+              {usePrintDate(classSession?.startTime)}
+            </Text>
+          </div>
           <div className={styles.addAndFilterBtnContainer}>
             <Tooltip label="Pokreni novo predavanje">
               <Button onClick={openStartNewClassSessionModal}>
@@ -228,22 +320,34 @@ function page() {
           </div>
 
           <div className={styles.tableAndCodesContainer}>
-          <ScrollArea className={styles.borderColor}>
-            <Table striped highlightOnHover withTableBorder withColumnBorders>
-              <Table.Thead>
-                <Table.Tr>
-                  <Table.Th className={styles.column}>Ime</Table.Th>
-                  <Table.Th className={styles.columnSmall}>Indeks</Table.Th>
-                  <Table.Th className={styles.columnMedium}>Vrijeme dolaska</Table.Th>
-                  <Table.Th className={styles.columnMedium}>Vrijeme odlaska</Table.Th>
-                </Table.Tr>
-              </Table.Thead>
-              <Table.Tbody>{rows}</Table.Tbody>
-            </Table>
-          </ScrollArea>
-          <div className={styles.codesContainer}>
-            KODOVI
-          </div>
+            <ScrollArea className={styles.borderColor}>
+              <Table striped highlightOnHover withTableBorder withColumnBorders>
+                <Table.Thead>
+                  <Table.Tr>
+                    <Table.Th className={styles.column}>Ime</Table.Th>
+                    <Table.Th className={styles.columnSmall}>Indeks</Table.Th>
+                    <Table.Th className={styles.columnMedium}>
+                      Vrijeme dolaska
+                    </Table.Th>
+                    <Table.Th className={styles.columnMedium}>
+                      Vrijeme odlaska
+                    </Table.Th>
+                  </Table.Tr>
+                </Table.Thead>
+                <Table.Tbody>{rows}</Table.Tbody>
+              </Table>
+            </ScrollArea>
+            <div className={styles.codesContainer}>
+              {QRcode &&
+                <>
+                  <QRCodeSVG value={QRcode} />
+                  <Text>{QRcode}</Text>
+                </>
+              }
+              <Button onClick={sendValue}>Send Message</Button>
+              <Button onClick={start}>Start timer</Button>
+              <Button onClick={clear}>Stop timer</Button>
+            </div>
           </div>
         </div>
         <div className={styles.bottomSpace}></div>

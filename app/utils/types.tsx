@@ -53,7 +53,19 @@ export interface ClassSession {
   endTime: Date;
   subject: Subject;
   person: Person;
-  //DOVRŠITI
+  codeForArrival: string;
+  codeForArrivalPrevious: string;
+}
+
+export interface SessionMessage {
+  classSessionId: number;
+  subjectName: string;
+  personId: number;
+  firstName: string;
+  lastName: string;
+  arrivalTime: string;
+  departureTime: string;
+  message: string;
 }
 
 export interface Sort {

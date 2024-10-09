@@ -423,8 +423,10 @@ const NavbarStudent: React.FC<NavbarStudentProps> = ({
           <Divider my="sm" />
 
           <Group justify="center" grow pb="xl" px="md">
-            <Button variant="default">Log in</Button>
-            <Button>Sign up</Button>
+            <Button>kRakic</Button>
+            <Button variant="default" onClick={handleLogout}>
+              Odjava
+            </Button>
           </Group>
         </ScrollArea>
       </Drawer>
