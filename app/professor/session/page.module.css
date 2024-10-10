@@ -89,6 +89,9 @@
     right: 50px;
     background-color: #C9C9C9;
     padding: 10px;
+    display: flex;
+    flex-direction: row;
+    column-gap: 10px;
 }
 
 

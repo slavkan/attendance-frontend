@@ -55,6 +55,7 @@ export interface ClassSession {
   person: Person;
   codeForArrival: string;
   codeForArrivalPrevious: string;
+  offsetInMinutes: number;
 }
 
 export interface ClassAttendance {

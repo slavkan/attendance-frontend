@@ -1,7 +1,7 @@
 "use client";
 import { PageLoading } from "@/app/components/PageLoading";
 import { Button, ScrollArea, Table, Tooltip, Text } from "@mantine/core";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
 import styles from "./page.module.css";
 import Image from "next/image";
 import {
@@ -64,6 +64,8 @@ function page() {
   const [studyEdit, setStudyEdit] = useState<Study | null>(null);
   const [studyDelete, setStudyDelete] = useState<Study | null>(null);
 
+  const [offset, setOffset] = useState(0);
+
   const [QRcode, setQRcode] = useState<string>("");
 
   const [elements, setElements] = useState<any[]>([]);
@@ -112,6 +114,7 @@ function page() {
       if (response.ok) {
         const responseData: ClassSession = await response.json();
         setClassSession(responseData);
+        setOffset(responseData.offsetInMinutes);
       } else {
         const errorData = await response.json();
         if (errorData) {
@@ -287,17 +290,68 @@ function page() {
     console.log(payload);
     var payloadData = JSON.parse(payload.body);
     console.log("Message received: ", payloadData);
-    const { finalMessage, status } = mapArrivalMessageForDashboard(payloadData.message, payloadData.firstName, payloadData.lastName);
-    if(status === "arrival" || status === "departure") {
+    const { finalMessage, status } = mapArrivalMessageForDashboard(
+      payloadData.message,
+      payloadData.firstName,
+      payloadData.lastName
+    );
+    if (status === "arrival" || status === "departure") {
       setRefreshTable(true);
     }
+
+    setRefreshStudies(true);
+
     notifications.show({
-      color: status === "departure" ? "green" : status === "error" ? "red" : undefined,
+      color:
+        status === "departure"
+          ? "green"
+          : status === "error"
+          ? "red"
+          : undefined,
       withBorder: true,
-      title: payloadData.firstName+" "+payloadData.lastName,
+      title: payloadData.firstName + " " + payloadData.lastName,
       message: finalMessage,
     });
   };
+
+  const handleOffsetChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setOffset(Number(event.target.value));
+  };
+
+  // set offset PUT request
+  const sendOffset = async () => {
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/class-sessions/set-offset?classSessionId=${sessionId}&offset=${offset}`,
+        {
+          method: "PUT",
+          headers: {
+            "content-type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const responseData: ClassSession = await response.json();
+        setOffset(responseData.offsetInMinutes);
+        notifications.show({
+          withBorder: true,
+          title: "Offset",
+          message: "Offset changed",
+        });
+      } else {
+        const errorData = await response.json();
+        if (errorData) {
+          console.log(errorData);
+        }
+      }
+    } catch (error) {
+      console.log("Error attempting to fetch data: ", error);
+    }
+  };
+
+
 
   const rows = elements.map((element) => (
     <Table.Tr key={element.id}>
@@ -378,7 +432,13 @@ function page() {
               {QRcode && (
                 <>
                   <QRCodeSVG value={QRcode} />
-                  <Text style={{ display: optionDebugQrCodeText ? 'block' : 'none' }}>{QRcode}</Text>
+                  <Text
+                    style={{
+                      display: optionDebugQrCodeText ? "block" : "none",
+                    }}
+                  >
+                    {QRcode}
+                  </Text>
                 </>
               )}
             </div>
@@ -387,10 +447,20 @@ function page() {
         <div className={styles.bottomSpace}></div>
       </div>
 
-      <button onClick={() => setDebugOptions((prev) => !prev)} className={styles.debugToggleButton} />
+      <button
+        onClick={() => setDebugOptions((prev) => !prev)}
+        className={styles.debugToggleButton}
+      />
 
-      <div className={styles.debugMenu} style={{ display: debugOptions ? 'block' : 'none' }}>
-        <Button onClick={() => setOptionDebugQrCodeText((prev) => !prev)}>Show QR Text</Button>
+      <div
+        className={styles.debugMenu}
+        style={{ display: debugOptions ? "flex" : "none" }}
+      >
+        <input type="number" value={offset} onChange={handleOffsetChange} style={{ width: '80px' }} />
+        <Button onClick={sendOffset}>Set Offset</Button>
+        <Button onClick={() => setOptionDebugQrCodeText((prev) => !prev)}>
+          Show QR Text
+        </Button>
         <Button onClick={sendValue}>Send Message</Button>
         <Button onClick={start}>Start timer</Button>
         <Button onClick={clear}>Stop timer</Button>
