@@ -22,15 +22,17 @@
 }
 
 .codesContainer{
-    width: 30%;
+    width: 128px;
     display: flex;
     flex-direction: column;
     align-items: end;
-    /* justify-content: end; */
 }
 
+/* Table container */
 .borderColor{
-    width: 70%;
+    /* width: 90%; */
+    width: calc(80vw - 150px);
+    max-height: calc(90vh - 200px);
 }
 
 .addAndFilterBtnContainer{
@@ -46,12 +48,12 @@
 }
 
 .columnSmall{
-    min-width: 80px;
+    min-width: 120px;
     text-align: center;
 }
 
 .columnMedium{
-    min-width: 100px;
+    min-width: 150px;
     text-align: center;
 }
 
@@ -66,4 +68,39 @@
 .crudButtonsContainer{
     display: flex;
     column-gap: 10px;
+}
+
+.debugToggleButton{
+    all: unset;
+    position: absolute;
+    bottom: 0;
+    right: 0px;
+    padding: 20px;
+    cursor: pointer;
+}
+
+.debugToggleButton:hover{
+    background-color: #C9C9C9;
+}
+
+.debugMenu{
+    position: absolute;
+    bottom: 0px;
+    right: 50px;
+    background-color: #C9C9C9;
+    padding: 10px;
+}
+
+
+@media (max-width: 900px) {
+    .borderColor{
+        width: 100%;
+        /* max-height: calc(90vh - 200px); */
+    }
+    .codesContainer{
+        position: absolute;
+        right: 5px;
+        top: 65px;
+        width: 128px;
+    }
 }

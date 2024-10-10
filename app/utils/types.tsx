@@ -48,13 +48,20 @@ export interface SubjectPerson {
 
 export interface ClassSession {
   id: number;
-  state: string;
   startTime: Date;
+  state: string;
   endTime: Date;
   subject: Subject;
   person: Person;
   codeForArrival: string;
   codeForArrivalPrevious: string;
+}
+
+export interface ClassAttendance {
+  id: number;
+  arrivalTime: Date;
+  departureTime: Date;
+  person: Person;
 }
 
 export interface SessionMessage {

@@ -4,7 +4,12 @@ import { Button, ScrollArea, Table, Tooltip, Text } from "@mantine/core";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import styles from "./page.module.css";
 import Image from "next/image";
-import { ClassSession, SessionMessage, Study } from "@/app/utils/types";
+import {
+  ClassAttendance,
+  ClassSession,
+  SessionMessage,
+  Study,
+} from "@/app/utils/types";
 import { useDisclosure, useTimeout } from "@mantine/hooks";
 import { getPlainCookie } from "@/app/auth/getPlainCookie";
 import { useSearchParams } from "next/navigation";
@@ -26,15 +31,14 @@ import Link from "next/link";
 import { over } from "stompjs";
 import SockJS from "sockjs-client";
 import { useGenerateRandomString } from "@/app/utils/useGenerateRandomString";
-import {QRCodeSVG} from 'qrcode.react';
+import { QRCodeSVG } from "qrcode.react";
 import { notifications } from "@mantine/notifications";
-
-
+import { mapArrivalMessageForDashboard } from "@/app/utils/mapArrivalMessageForStudent";
 
 // var stompClient:any = null;
 function page() {
   const token = getPlainCookie();
-  
+
   const stompClientRef = useRef<any>(null);
   const [isConnected, setIsConnected] = useState(false);
 
@@ -42,6 +46,8 @@ function page() {
   const subjectId = searchParams?.get("subjectId") ?? "";
   const sessionId = searchParams?.get("sessionId") ?? "";
   const subjectIdNumber = parseInt(subjectId);
+  const [debugOptions, setDebugOptions] = useState(false);
+  const [optionDebugQrCodeText, setOptionDebugQrCodeText] = useState(false);
   const { authorized, subjectName } = useCheckRoleAndSubject(
     "ROLE_PROFESSOR",
     subjectId
@@ -51,6 +57,9 @@ function page() {
   const userId = decodedToken ? decodedToken.userId : "";
 
   const [response, setResponse] = useState<ClassSession[] | null>(null);
+  const [responseAttendance, setResponseAttendance] = useState<
+    ClassAttendance[] | null
+  >(null);
   const [classSession, setClassSession] = useState<ClassSession>();
   const [studyEdit, setStudyEdit] = useState<Study | null>(null);
   const [studyDelete, setStudyDelete] = useState<Study | null>(null);
@@ -60,6 +69,7 @@ function page() {
   const [elements, setElements] = useState<any[]>([]);
 
   const [refreshStudies, setRefreshStudies] = useState<boolean>(false);
+  const [refreshTable, setRefreshTable] = useState<boolean>(false);
   const [studiesChanged, setStudiesChanged] = useState<boolean>(false);
 
   const [
@@ -101,7 +111,6 @@ function page() {
 
       if (response.ok) {
         const responseData: ClassSession = await response.json();
-        console.log("RESPOSNE OK", responseData);
         setClassSession(responseData);
       } else {
         const errorData = await response.json();
@@ -114,34 +123,70 @@ function page() {
     }
   }, [setRefreshStudies, subjectId]);
 
+  //Fetch class attendance
+  useEffect(() => {
+    const fetchClassAttendance = async () => {
+      setRefreshTable(false);
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/class-attendance/${sessionId}`,
+          {
+            method: "GET",
+            headers: {
+              "content-type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
+        if (response.ok) {
+          const responseData: ClassAttendance[] = await response.json();
+          console.log("RESPONSE OK", responseData);
+          setResponseAttendance(responseData);
+        } else {
+          const errorData = await response.json();
+          if (errorData) {
+            console.log(errorData);
+          }
+        }
+      } catch (error) {
+        console.log("Error attempting to fetch data: ", error);
+      }
+    };
 
-  
-
-
+    fetchClassAttendance();
+  }, [sessionId, refreshTable]);
 
   useEffect(() => {
-    if (response) {
-      const transformedElements = response
-        .map((classSession) => ({
-          id: classSession.id,
-          startTime: classSession.startTime,
-          endTime: classSession.endTime,
-          status:
-            classSession.state === "IN_PROGRESS"
-              ? "U tijeku"
-              : classSession.state === "PAUSED"
-              ? "Pauzirano"
-              : "Završeno",
+    if (responseAttendance) {
+      const transformedElements = responseAttendance
+        .map((classAttendance) => ({
+          id: classAttendance.id,
+          arrivalTime: classAttendance.arrivalTime,
+          departureTime: classAttendance.departureTime,
+          person: {
+            id: classAttendance.person.id,
+            firstName: classAttendance.person.firstName,
+            lastName: classAttendance.person.lastName,
+            indexNumber: classAttendance.person.indexNumber,
+          },
         }))
-        .sort(
-          (a, b) =>
-            new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
-        );
+        .sort((a, b) => {
+          const dateA = new Date(a.departureTime || a.arrivalTime).getTime();
+          const dateB = new Date(b.departureTime || b.arrivalTime).getTime();
+          return dateB - dateA;
+        });
       setElements(transformedElements);
     }
-  }, [response]);
+  }, [responseAttendance]);
 
+  //Trigger generateNewQrCode first render
+
+  useEffect(() => {
+    if (sessionId) {
+      generateNewQrCode();
+    }
+  }, [sessionId]);
 
   // Generate QR code
   const generateNewQrCode = useCallback(async () => {
@@ -155,7 +200,7 @@ function page() {
           method: "POST",
           headers: {
             "content-type": "application/json",
-            "Authorization": `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );
@@ -177,9 +222,7 @@ function page() {
     }
   }, [setRefreshStudies, subjectId]);
 
-
-
-  const { start, clear } = useTimeout(() => generateNewQrCode(), 2000);
+  const { start, clear } = useTimeout(() => generateNewQrCode(), 15000);
 
   // Web Socket
   useEffect(() => {
@@ -188,23 +231,37 @@ function page() {
     stompClientRef.current = stompClient;
 
     const connectPrivateUrl = `/user/${sessionId}/private`;
-  
+
     stompClient.connect(
       {},
       () => {
-        stompClient.subscribe(
+        const subscription = stompClient.subscribe(
           connectPrivateUrl,
           onPrivateMessage
         );
+        setIsConnected(true);
+
+        // Cleanup function to unsubscribe
+        return () => {
+          subscription.unsubscribe();
+          setIsConnected(false);
+        };
       },
       (error) => {
         console.log("Error connecting to web socket: ", error);
       }
     );
+
+    // Cleanup function to disconnect the client
+    return () => {
+      if (stompClientRef.current && stompClientRef.current.connected) {
+        stompClientRef.current.disconnect();
+      }
+    };
   }, [sessionId]);
-  
+
   const sendValue = () => {
-    if (stompClientRef.current) {
+    if (isConnected && stompClientRef.current) {
       const sendMessage = {
         classSessionId: 1,
         subjectName: "",
@@ -216,70 +273,50 @@ function page() {
         departureTime: "",
         message: "",
       };
-      stompClientRef.current.send(`/app/class-session`, {}, JSON.stringify(sendMessage));
+      stompClientRef.current.send(
+        `/app/class-session`,
+        {},
+        JSON.stringify(sendMessage)
+      );
     } else {
-      console.log("stompClient is not initialized");
+      console.log("stompClient is not initialized or not connected");
     }
   };
 
-
-  const onPrivateMessage = (payload:any) => {
+  const onPrivateMessage = (payload: any) => {
     console.log(payload);
     var payloadData = JSON.parse(payload.body);
     console.log("Message received: ", payloadData);
+    const { finalMessage, status } = mapArrivalMessageForDashboard(payloadData.message, payloadData.firstName, payloadData.lastName);
+    if(status === "arrival" || status === "departure") {
+      setRefreshTable(true);
+    }
     notifications.show({
+      color: status === "departure" ? "green" : status === "error" ? "red" : undefined,
       withBorder: true,
-      title: "Scan",
-      message: `Skeniro si se`,
+      title: payloadData.firstName+" "+payloadData.lastName,
+      message: finalMessage,
     });
   };
 
-
-
-
   const rows = elements.map((element) => (
     <Table.Tr key={element.id}>
-      <Table.Td className={styles.column}>
-        {usePrintDate(element.startTime)}{" "}
-        <b>{usePrintTime(element.startTime)}</b>
-      </Table.Td>
-      <Table.Td className={styles.column}>
+      {/* <Table.Td className={styles.column}>
         {usePrintDate(element.endTIme)} <b>{usePrintTime(element.endTIme)}</b>
-      </Table.Td>
-      <Table.Td className={styles.column}>{element.status}</Table.Td>
+      </Table.Td> */}
       <Table.Td className={styles.column}>
-        <div className={styles.crudButtonsContainer}>
-          {element.status !== "Završeno" && (
-            <Tooltip label="Nastavi predavanje">
-              <Link
-                href={{
-                  pathname: "/professor/session",
-                  query: { sessionId: element.id },
-                }}
-              >
-                <Button color="blue">
-                  <Image
-                    src="/assets/svgs/play.svg"
-                    alt="Edit"
-                    width={24}
-                    height={24}
-                  ></Image>
-                </Button>
-              </Link>
-            </Tooltip>
-          )}
-
-          {/* <Tooltip label="Obriši studij">
-            <Button color="red" onClick={() => handleDeleteFaculty(element)}>
-              <Image
-                src="/assets/svgs/trash.svg"
-                alt="Delete"
-                width={24}
-                height={24}
-              ></Image>
-            </Button>
-          </Tooltip> */}
-        </div>
+        {element.person.firstName} {element.person.lastName}
+      </Table.Td>
+      <Table.Td className={styles.columnSmall}>
+        {element.person.indexNumber}
+      </Table.Td>
+      <Table.Td className={styles.columnMedium}>
+        {usePrintDate(element.arrivalTime)}{" "}
+        <b>{usePrintTime(element.arrivalTime)}</b>
+      </Table.Td>
+      <Table.Td className={styles.columnMedium}>
+        {usePrintDate(element.departureTime)}{" "}
+        <b>{usePrintTime(element.departureTime)}</b>
       </Table.Td>
     </Table.Tr>
   ));
@@ -338,19 +375,25 @@ function page() {
               </Table>
             </ScrollArea>
             <div className={styles.codesContainer}>
-              {QRcode &&
+              {QRcode && (
                 <>
                   <QRCodeSVG value={QRcode} />
-                  <Text>{QRcode}</Text>
+                  <Text style={{ display: optionDebugQrCodeText ? 'block' : 'none' }}>{QRcode}</Text>
                 </>
-              }
-              <Button onClick={sendValue}>Send Message</Button>
-              <Button onClick={start}>Start timer</Button>
-              <Button onClick={clear}>Stop timer</Button>
+              )}
             </div>
           </div>
         </div>
         <div className={styles.bottomSpace}></div>
+      </div>
+
+      <button onClick={() => setDebugOptions((prev) => !prev)} className={styles.debugToggleButton} />
+
+      <div className={styles.debugMenu} style={{ display: debugOptions ? 'block' : 'none' }}>
+        <Button onClick={() => setOptionDebugQrCodeText((prev) => !prev)}>Show QR Text</Button>
+        <Button onClick={sendValue}>Send Message</Button>
+        <Button onClick={start}>Start timer</Button>
+        <Button onClick={clear}>Stop timer</Button>
       </div>
 
       <StartClassSessionModal

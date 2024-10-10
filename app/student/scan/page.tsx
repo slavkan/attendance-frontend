@@ -11,6 +11,9 @@ import { useEffect, useRef, useState } from "react";
 import { over } from "stompjs";
 import SockJS from "sockjs-client";
 import { Button } from "@mantine/core";
+import { notifications } from "@mantine/notifications";
+import '@mantine/notifications/styles.css';
+
 
 export default function Page() {
   const token = getPlainCookie();
@@ -25,37 +28,40 @@ export default function Page() {
   const [alreadyConnectedToSocket, setAlreadyConnectedToSocket] =
     useState(false);
 
-  const [debug, setDebug] = useState("");
+  const [debug, setDebug] = useState("A");
 
   const handleScan = (detectedCodes: IDetectedBarcode[]) => {
     if (detectedCodes.length > 0) {
+      
       setIsScannerActive(false);
       setQrExtractedData(detectedCodes[0].rawValue);
-      const extractSessionId = detectedCodes[0].rawValue;
+      const extractSessionId = detectedCodes[0].rawValue.split('_')[0];
+      setDebug(detectedCodes[0].rawValue);
       setSessionId(extractSessionId);
+    }else {
+      setDebug("ELSE OTISLO");
     }
     if (alreadyConnectedToSocket === true) {
-      sendValue();
+      sendValue(detectedCodes[0].rawValue);
     }
   };
 
   // Web Socket
   useEffect(() => {
     if (alreadyConnectedToSocket === false) {
-      if (sessionId !== "") {
+      if (sessionId !== "" && qrExtractedData !== "") {
         setAlreadyConnectedToSocket(true);
-        setDebug("Connecting to web socket");
         const socket = new SockJS(`${process.env.NEXT_PUBLIC_API_URL}/ws`);
         const stompClient = over(socket);
         stompClientRef.current = stompClient;
 
-        const connectPrivateUrl = `/user/${sessionId}/private`;
+        const connectPrivateUrl = `/user/${sessionId}/private-student`;
 
         stompClient.connect(
           {},
           () => {
             stompClient.subscribe(connectPrivateUrl, onPrivateMessage);
-            sendValue();
+            sendValue(qrExtractedData);
           },
           (error) => {
             console.log("Error connecting to web socket: ", error);
@@ -63,21 +69,25 @@ export default function Page() {
         );
       }
     }
-  }, [sessionId]);
+  }, [sessionId, alreadyConnectedToSocket, qrExtractedData]);
 
   const onPrivateMessage = (payload: any) => {
     console.log(payload);
     var payloadData = JSON.parse(payload.body);
-    console.log("Message received: ", payloadData);
+    notifications.show({
+      withBorder: true,
+      title: "Scan",
+      message: `Skeniro si se`,
+    });
   };
 
-  const sendValue = () => {
+  const sendValue = (code: string) => {
     if (stompClientRef.current) {
       const sendMessage = {
-        classSessionId: 1,
+        classSessionId: sessionId,
         subjectName: "",
-        personId: 1,
-        code: "1_5mr9ketfno",
+        personId: userId,
+        code: code,
         firstName: "",
         lastName: "",
         arrivalTime: "",
@@ -128,7 +138,7 @@ export default function Page() {
           )}
         </div>
         <div>
-          <div>{qrExtractedData}</div>
+          <div>{sessionId}</div>
           <div>{debug}</div>
         </div>
       </div>
