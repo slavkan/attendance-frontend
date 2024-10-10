@@ -185,7 +185,7 @@ function page() {
                 )}
                 {person?.worker && (
                   <Link href="/worker/dashboard">
-                    <Button fullWidth>Worker</Button>
+                    <Button fullWidth>Radnik</Button>
                   </Link>
                 )}
                 {person?.professor && (

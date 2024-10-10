@@ -2,7 +2,7 @@
 import useCheckRole from "@/app/auth/useCheckRole";
 import Navbar2 from "@/app/components/Navbar2";
 import { PageLoading } from "@/app/components/PageLoading";
-import { Button, Pagination, ScrollArea, Table, Tooltip } from "@mantine/core";
+import { Button, Pagination, ScrollArea, Table, Tooltip, Text } from "@mantine/core";
 import React, { useCallback, useEffect, useState } from "react";
 import styles from "./page.module.css";
 import Image from "next/image";
@@ -40,6 +40,7 @@ function page() {
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [subjectEdit, setSubjectEdit] = useState<Subject | null>(null);
   const [subjectDelete, setSubjectDelete] = useState<Subject | null>(null);
+  const [studyName, setStudyName] = useState<string>("");
 
   const [elements, setElements] = useState<any[]>([]);
 
@@ -92,6 +93,41 @@ function page() {
       console.log("Error attempting to fetch data: ", error);
     }
   }, [setRefreshSubjects]);
+
+
+  // Fetch study details
+  const fetchStudyDetails = useCallback(async () => {
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/study/${studyId}`,
+        {
+          method: "GET",
+          headers: {
+            "content-type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const studyData = await response.json();
+        setStudyName(studyData.name);
+      } else {
+        const errorData = await response.json();
+        if (errorData) {
+          console.log(errorData);
+        }
+      }
+    } catch (error) {
+      console.log("Error attempting to fetch study details: ", error);
+    }
+  }, [studyId, token]);
+
+  useEffect(() => {
+    if (authorized === "AUTHORIZED") {
+      fetchStudyDetails();
+    }
+  }, [authorized, fetchStudyDetails]);
 
   useEffect(() => {
     if (response) {
@@ -169,6 +205,14 @@ function page() {
       <NavbarWorker token={token} studiesChanged={false} />
       <div className={styles.mainDiv}>
         <div className={styles.pageContent}>
+        <div className={styles.pageHeading}>
+            <Text size="lg" fw={500}>
+              Kolegiji
+            </Text>
+            <Text style={{ lineHeight: "100%", marginTop: "7px" }}>
+              {studyName}
+            </Text>
+          </div>
           <div className={styles.addAndFilterBtnContainer}>
             <Tooltip label="Dodaj kolegij">
               <Button onClick={openAddSubjectModal}>

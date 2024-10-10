@@ -241,11 +241,11 @@ export default function EditUserModalForWorker({
           color: isDeleting ? "red" : "green",
           withBorder: true,
           title: isDeleting
-            ? "Korisnik uklonjen sa predmeta"
-            : "Korisnik dodan na predmet",
+            ? "Korisnik uklonjen sa kolegij"
+            : "Korisnik dodan na kolegij",
           message: isDeleting
-            ? `Korisnik ${newPersonForm.firstName} ${newPersonForm.lastName} je uspješno uklonjen sa predmeta`
-            : `Korisnik ${newPersonForm.firstName} ${newPersonForm.lastName} je uspješno dodan na predmet`,
+            ? `Korisnik ${newPersonForm.firstName} ${newPersonForm.lastName} je uspješno uklonjen sa kolegija`
+            : `Korisnik ${newPersonForm.firstName} ${newPersonForm.lastName} je uspješno dodan na kolegij`,
         });
       } else {
         const errorData = await response.json();
@@ -348,7 +348,7 @@ export default function EditUserModalForWorker({
           <Tabs.List mb={10}>
             <Tabs.Tab value="editPerson">Uređivanje korisnika</Tabs.Tab>
             <Tabs.Tab value="editPersonStudy">
-              Povezivanje sa studijima
+              Povezivanje sa kolegijima
             </Tabs.Tab>
           </Tabs.List>
           <Tabs.Panel value="editPerson">
@@ -411,21 +411,12 @@ export default function EditUserModalForWorker({
               <div className={styles.checkboxTwoRows}>
                 <div>
                   <Checkbox
-                    checked={newPersonForm.admin}
-                    mb={10}
-                    name="admin"
-                    label="Admin"
-                    onChange={handleFormInput}
-                  />
-                  <Checkbox
                     checked={newPersonForm.worker}
                     mb={10}
                     name="worker"
                     label="Radnik"
                     onChange={handleFormInput}
                   />
-                </div>
-                <div>
                   <Checkbox
                     checked={newPersonForm.professor}
                     mb={10}

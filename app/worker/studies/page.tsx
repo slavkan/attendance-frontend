@@ -2,7 +2,14 @@
 import useCheckRole from "@/app/auth/useCheckRole";
 import Navbar2 from "@/app/components/Navbar2";
 import { PageLoading } from "@/app/components/PageLoading";
-import { Button, Pagination, ScrollArea, Table, Tooltip } from "@mantine/core";
+import {
+  Button,
+  Pagination,
+  ScrollArea,
+  Table,
+  Tooltip,
+  Text,
+} from "@mantine/core";
 import React, { useCallback, useEffect, useState } from "react";
 import styles from "./page.module.css";
 import Image from "next/image";
@@ -37,6 +44,7 @@ function page() {
   const [studies, setStudies] = useState<Study[]>([]);
   const [studyEdit, setStudyEdit] = useState<Study | null>(null);
   const [studyDelete, setStudyDelete] = useState<Study | null>(null);
+  const [facultyName, setFacultyName] = useState<string>("");
 
   const [elements, setElements] = useState<any[]>([]);
 
@@ -64,7 +72,7 @@ function page() {
     }
   }, [authorized, refreshStudies]);
 
-  //Fetch faculties
+  //Fetch studies
   const fetchData = useCallback(async () => {
     try {
       const response = await fetch(
@@ -80,6 +88,7 @@ function page() {
 
       if (response.ok) {
         const responseData = await response.json();
+        console.log(responseData);
         setResponse(responseData);
       } else {
         const errorData = await response.json();
@@ -92,12 +101,45 @@ function page() {
     }
   }, [setRefreshStudies]);
 
+  // Fetch faculty details
+  const fetchFacultyDetails = useCallback(async () => {
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/faculties/${facultyId}`,
+        {
+          method: "GET",
+          headers: {
+            "content-type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const facultyData = await response.json();
+        setFacultyName(facultyData.name);
+      } else {
+        const errorData = await response.json();
+        if (errorData) {
+          console.log(errorData);
+        }
+      }
+    } catch (error) {
+      console.log("Error attempting to fetch faculty details: ", error);
+    }
+  }, [facultyId, token]);
+
+  useEffect(() => {
+    if (authorized === "AUTHORIZED") {
+      fetchFacultyDetails();
+    }
+  }, [authorized, fetchFacultyDetails]);
+
   useEffect(() => {
     if (response) {
       const transformedElements = response.map((faculty) => ({
         id: faculty.id,
         name: faculty.name,
-        //abbreviation: faculty.abbreviation,
       }));
       setElements(transformedElements);
     }
@@ -161,9 +203,17 @@ function page() {
 
   return (
     <div>
-      <NavbarWorker token={token} studiesChanged={studiesChanged}/>
+      <NavbarWorker token={token} studiesChanged={studiesChanged} />
       <div className={styles.mainDiv}>
         <div className={styles.pageContent}>
+          <div className={styles.pageHeading}>
+            <Text size="lg" fw={500}>
+              Studiji
+            </Text>
+            <Text style={{ lineHeight: "100%", marginTop: "7px" }}>
+              {facultyName}
+            </Text>
+          </div>
           <div className={styles.addAndFilterBtnContainer}>
             <Tooltip label="Dodaj studij">
               <Button onClick={openAddStudyModal}>

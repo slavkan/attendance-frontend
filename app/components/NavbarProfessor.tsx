@@ -85,7 +85,7 @@ const NavbarProfessor: React.FC<NavbarProfessorProps> = ({
           <Group h="100%" gap={0} visibleFrom="sm">
 
             <Link href="/professor/dashboard" className={classes.link}>
-              Moji E-kolegiji
+              Moji kolegiji
             </Link>
           </Group>
 
@@ -132,7 +132,7 @@ const NavbarProfessor: React.FC<NavbarProfessorProps> = ({
           <Divider my="sm" />
 
           <Link href="/professor/dashboard" className={classes.link}>
-            Moji E-kolegiji
+            Moji kolegiji
           </Link>
 
           <Divider my="sm" />

@@ -7,6 +7,13 @@
   width: 50%;
 }
 
+.pageHeading{
+  display: flex;
+  flex-direction: row;
+  column-gap: 10px;
+  margin-bottom: 10px;
+}
+
 /* Bellow 1400px  */
 @media (max-width: 1400px) {
   .accordionWidth{

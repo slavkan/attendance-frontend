@@ -2,7 +2,14 @@
 import useCheckRole from "@/app/auth/useCheckRole";
 import Navbar2 from "@/app/components/Navbar2";
 import { PageLoading } from "@/app/components/PageLoading";
-import { Button, Pagination, ScrollArea, Table, Tooltip } from "@mantine/core";
+import {
+  Button,
+  Pagination,
+  ScrollArea,
+  Table,
+  Tooltip,
+  Text,
+} from "@mantine/core";
 import React, { useCallback, useEffect, useState } from "react";
 import styles from "./page.module.css";
 import Image from "next/image";
@@ -61,7 +68,7 @@ function page() {
           method: "GET",
           headers: {
             "content-type": "application/json",
-            "Authorization": `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );
@@ -79,7 +86,6 @@ function page() {
       console.log("Error attempting to fetch data: ", error);
     }
   }, []);
-
 
   useEffect(() => {
     if (response) {
@@ -146,7 +152,7 @@ function page() {
   ));
 
   if (authorized === "CHECKING") {
-    return <PageLoading visible={true}/>;
+    return <PageLoading visible={true} />;
   }
 
   return (
@@ -154,6 +160,11 @@ function page() {
       <Navbar2 />
       <div className={styles.mainDiv}>
         <div className={styles.pageContent}>
+          <div className={styles.pageHeading}>
+            <Text size="lg" fw={500}>
+              Fakulteti
+            </Text>
+          </div>
           <div className={styles.addAndFilterBtnContainer}>
             <Tooltip label="Dodaj fakultet">
               <Button onClick={openAddFacultyModal}>

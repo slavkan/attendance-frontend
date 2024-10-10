@@ -133,7 +133,7 @@ export default function EndClassSessionModal({
       <Modal
         opened={opened}
         onClose={handleClose}
-        title="Pokreni novo predavanje"
+        title="Završi predavanje"
       >
         <form onSubmit={onSubmit}>
           <TextInput
@@ -161,8 +161,8 @@ export default function EndClassSessionModal({
             checked={nullifySessions}
             onChange={handleCheckboxChange}
           />
-          <Button type="submit" fullWidth mt={20}>
-            Dodaj
+          <Button color="red" type="submit" fullWidth mt={20}>
+            Završi predavanje
           </Button>
         </form>
       </Modal>

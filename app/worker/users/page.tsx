@@ -1,7 +1,7 @@
 "use client";
 import useCheckRole from "@/app/auth/useCheckRole";
 import { PageLoading } from "@/app/components/PageLoading";
-import { Button, Pagination, ScrollArea, Table, Tooltip } from "@mantine/core";
+import { Button, Pagination, ScrollArea, Table, Tooltip, Text } from "@mantine/core";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import styles from "./page.module.css";
 import Image from "next/image";
@@ -56,6 +56,8 @@ function page() {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(10);
   const [totalPages, setTotalPages] = useState<number>(0);
+
+  const [facultyName, setFacultyName] = useState<string>("");
 
   const [
     openedAddUserModal,
@@ -153,6 +155,41 @@ function page() {
       fetchFaculties();
     }
   }, [facultiesToBeFetched]);
+
+
+  // Fetch faculty details
+  const fetchFacultyDetails = useCallback(async () => {
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/faculties/${facultyId}`,
+        {
+          method: "GET",
+          headers: {
+            "content-type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const facultyData = await response.json();
+        setFacultyName(facultyData.name);
+      } else {
+        const errorData = await response.json();
+        if (errorData) {
+          console.log(errorData);
+        }
+      }
+    } catch (error) {
+      console.log("Error attempting to fetch faculty details: ", error);
+    }
+  }, [facultyId, token]);
+
+  useEffect(() => {
+    if (authorized === "AUTHORIZED") {
+      fetchFacultyDetails();
+    }
+  }, [authorized, fetchFacultyDetails]);
 
 
   //Fetch subjects of all studies
@@ -325,6 +362,14 @@ function page() {
       <NavbarWorker token={token} studiesChanged={false}/>
       <div className={styles.mainDiv}>
         <div className={styles.pageContent}>
+        <div className={styles.pageHeading}>
+            <Text size="lg" fw={500}>
+              Korisnici
+            </Text>
+            <Text style={{ lineHeight: "100%", marginTop: "7px" }}>
+              {facultyName}
+            </Text>
+          </div>
           <div className={styles.addAndFilterBtnContainer}>
             <Tooltip label="Dodaj korisnika">
               <Button onClick={openAddUserModal}>

@@ -9,7 +9,7 @@ export const mapArrivalMessageForDashboard = (passedMessage: string, firstName: 
   console.log("Passed message: ", passedMessage);
   switch (passedMessage) {
     case "Student is not part of this subject":
-      return { finalMessage: `${firstName} ${lastName} nije dio ovog predmeta`, status: "error" };
+      return { finalMessage: `${firstName} ${lastName} nije dio ovog kolegija`, status: "error" };
     case "Class session is not in progress":
       return { finalMessage: `Predavanje nije u toku`, status: "error" };
     case "Invalid code":

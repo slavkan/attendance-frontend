@@ -178,7 +178,10 @@ function page() {
           )}
 
           <Tooltip label="Pregled predavanja">
-            <Button color="green" onClick={() => handleViewClassSession(element.id)}>
+            <Button
+              color="green"
+              onClick={() => handleViewClassSession(element.id)}
+            >
               <Image
                 src="/assets/svgs/eye.svg"
                 alt="Delete"
@@ -199,11 +202,19 @@ function page() {
   return (
     <div>
       <NavbarProfessor token={token} studiesChanged={studiesChanged} />
-      <Text size="xl" ta="center" mb={20}>
+      {/* <Text size="xl" ta="center" mb={20}>
         {subjectName} - Sva predavanja
-      </Text>
+      </Text> */}
       <div className={styles.mainDiv}>
         <div className={styles.pageContent}>
+          <div className={styles.pageHeading}>
+            <Text size="lg" fw={500}>
+              Sva predavanja
+            </Text>
+            <Text style={{ lineHeight: "100%", marginTop: "7px" }}>
+              {subjectName}
+            </Text>
+          </div>
           <div className={styles.addAndFilterBtnContainer}>
             <Tooltip label="Pokreni novo predavanje">
               <Button onClick={openStartNewClassSessionModal}>

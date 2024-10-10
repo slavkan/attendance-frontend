@@ -149,6 +149,11 @@ export default function Page() {
       <NavbarProfessor token={token} studiesChanged={false} />
       <div className={styles.accordionWrapper}>
         <div className={styles.accordionWidth}>
+        <div className={styles.pageHeading}>
+            <Text size="lg" fw={500}>
+              Moji Kolegiji
+            </Text>
+          </div>
           <Accordion variant="separated">{items}</Accordion>
         </div>
       </div>

@@ -34,3 +34,10 @@
     display: flex;
     column-gap: 10px;
 }
+
+.pageHeading{
+    display: flex;
+    flex-direction: row;
+    column-gap: 10px;
+    margin-bottom: 10px;
+}

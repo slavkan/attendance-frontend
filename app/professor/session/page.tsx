@@ -384,10 +384,10 @@ function page() {
             </Text>
           </div>
           <div className={styles.addAndFilterBtnContainer}>
-            <Tooltip label="Pokreni novo predavanje">
-              <Button onClick={openEndClassSessionModal}>
+            <Tooltip label="Završi predavanje">
+              <Button color="red" onClick={openEndClassSessionModal}>
                 <Image
-                  src="/assets/svgs/plus.svg"
+                  src="/assets/svgs/clock-stop.svg"
                   alt="Plus Icon"
                   width={24}
                   height={24}
