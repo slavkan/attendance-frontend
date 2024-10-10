@@ -19,7 +19,16 @@
   background-color: var(--mantine-primary-color-1);
 }
 
-.addCredsContainer{
+.addCredsContainer1{
+  position: fixed;
+  bottom: 5px;
+  right: 105px;
+  display: flex;
+  flex-direction: column;
+  row-gap: 5px;
+}
+
+.addCredsContainer2{
   position: fixed;
   bottom: 5px;
   right: 5px;

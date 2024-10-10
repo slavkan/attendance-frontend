@@ -13,10 +13,6 @@ import {
 import { useDisclosure, useTimeout } from "@mantine/hooks";
 import { getPlainCookie } from "@/app/auth/getPlainCookie";
 import { useSearchParams } from "next/navigation";
-import NavbarWorker from "@/app/components/NavbarWorker";
-import AddStudyModal from "@/app/components/workerComponents/AddStudyModal";
-import EditStudyModal from "@/app/components/workerComponents/EditStudyModal";
-import DeleteStudyModal from "@/app/components/workerComponents/DeleteStudyModal";
 import useCheckRoleAndSubject from "@/app/auth/useCheckRoleAndSubject";
 import NavbarProfessor from "@/app/components/NavbarProfessor";
 import {
@@ -24,16 +20,15 @@ import {
   usePrintTime,
   usePrintDateTime,
 } from "@/app/utils/usePrintDateTime";
-import StartClassSessionModal from "@/app/components/professorComponents/StartClassSessionModal";
 import { getDecodedToken } from "@/app/auth/getDecodedToken";
-import Link from "next/link";
 
 import { over } from "stompjs";
 import SockJS from "sockjs-client";
 import { useGenerateRandomString } from "@/app/utils/useGenerateRandomString";
 import { QRCodeSVG } from "qrcode.react";
 import { notifications } from "@mantine/notifications";
-import { mapArrivalMessageForDashboard } from "@/app/utils/mapArrivalMessageForStudent";
+import { mapArrivalMessageForDashboard } from "@/app/utils/mapArrivalMessageForDashboard";
+import EndClassSessionModal from "@/app/components/professorComponents/EndClassSessionModal";
 
 // var stompClient:any = null;
 function page() {
@@ -61,8 +56,6 @@ function page() {
     ClassAttendance[] | null
   >(null);
   const [classSession, setClassSession] = useState<ClassSession>();
-  const [studyEdit, setStudyEdit] = useState<Study | null>(null);
-  const [studyDelete, setStudyDelete] = useState<Study | null>(null);
 
   const [offset, setOffset] = useState(0);
 
@@ -75,20 +68,13 @@ function page() {
   const [studiesChanged, setStudiesChanged] = useState<boolean>(false);
 
   const [
-    openedStartNewClassSessionModal,
+    openedEndClassSessionModal,
     {
-      open: openStartNewClassSessionModal,
-      close: closeStartNewClassSessionModal,
+      open: openEndClassSessionModal,
+      close: closeEndClassSessionModal,
     },
   ] = useDisclosure(false);
-  const [
-    openedEditStudyModal,
-    { open: openEditStudyModal, close: closeEditStudyModal },
-  ] = useDisclosure(false);
-  const [
-    openedDeleteStudyModal,
-    { open: openDeleteStudyModal, close: closeDeleteStudyModal },
-  ] = useDisclosure(false);
+
 
   useEffect(() => {
     setRefreshStudies(false);
@@ -289,13 +275,13 @@ function page() {
   const onPrivateMessage = (payload: any) => {
     console.log(payload);
     var payloadData = JSON.parse(payload.body);
-    console.log("Message received: ", payloadData);
     const { finalMessage, status } = mapArrivalMessageForDashboard(
       payloadData.message,
       payloadData.firstName,
       payloadData.lastName
     );
     if (status === "arrival" || status === "departure") {
+      console.log("REFRESH TABLE");
       setRefreshTable(true);
     }
 
@@ -364,12 +350,12 @@ function page() {
       <Table.Td className={styles.columnSmall}>
         {element.person.indexNumber}
       </Table.Td>
-      <Table.Td className={styles.columnMedium}>
-        {usePrintDate(element.arrivalTime)}{" "}
+      <Table.Td className={styles.columnSmall}>
+        {/* {usePrintDate(element.arrivalTime)}{" "} */}
         <b>{usePrintTime(element.arrivalTime)}</b>
       </Table.Td>
-      <Table.Td className={styles.columnMedium}>
-        {usePrintDate(element.departureTime)}{" "}
+      <Table.Td className={styles.columnSmall}>
+        {/* {usePrintDate(element.departureTime)}{" "} */}
         <b>{usePrintTime(element.departureTime)}</b>
       </Table.Td>
     </Table.Tr>
@@ -399,7 +385,7 @@ function page() {
           </div>
           <div className={styles.addAndFilterBtnContainer}>
             <Tooltip label="Pokreni novo predavanje">
-              <Button onClick={openStartNewClassSessionModal}>
+              <Button onClick={openEndClassSessionModal}>
                 <Image
                   src="/assets/svgs/plus.svg"
                   alt="Plus Icon"
@@ -417,10 +403,10 @@ function page() {
                   <Table.Tr>
                     <Table.Th className={styles.column}>Ime</Table.Th>
                     <Table.Th className={styles.columnSmall}>Indeks</Table.Th>
-                    <Table.Th className={styles.columnMedium}>
+                    <Table.Th className={styles.columnSmall}>
                       Vrijeme dolaska
                     </Table.Th>
-                    <Table.Th className={styles.columnMedium}>
+                    <Table.Th className={styles.columnSmall}>
                       Vrijeme odlaska
                     </Table.Th>
                   </Table.Tr>
@@ -466,14 +452,15 @@ function page() {
         <Button onClick={clear}>Stop timer</Button>
       </div>
 
-      <StartClassSessionModal
+      <EndClassSessionModal
         token={token}
-        opened={openedStartNewClassSessionModal}
-        open={openStartNewClassSessionModal}
-        close={closeStartNewClassSessionModal}
+        opened={openedEndClassSessionModal}
+        open={openEndClassSessionModal}
+        close={closeEndClassSessionModal}
         creatorRole="ROLE_PROFESSOR"
-        subjectId={subjectId}
+        classSessionId={sessionId}
         professorId={userId}
+        clear={clear}
       />
     </div>
   );

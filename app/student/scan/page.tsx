@@ -13,6 +13,7 @@ import SockJS from "sockjs-client";
 import { Button } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import '@mantine/notifications/styles.css';
+import { mapArrivalMessageForStudent } from "@/app/utils/mapArrivalMessageForStudent";
 
 
 export default function Page() {
@@ -43,6 +44,7 @@ export default function Page() {
     }
     if (alreadyConnectedToSocket === true) {
       sendValue(detectedCodes[0].rawValue);
+      setQrExtractedData("");
     }
   };
 
@@ -56,30 +58,48 @@ export default function Page() {
         stompClientRef.current = stompClient;
 
         const connectPrivateUrl = `/user/${sessionId}/private-student`;
+        const subscriptionId = "privateStudentSubscription";
 
         stompClient.connect(
           {},
           () => {
-            stompClient.subscribe(connectPrivateUrl, onPrivateMessage);
+            stompClient.subscribe(connectPrivateUrl, onPrivateMessage, { id: "privateStudentSubscription" });
             sendValue(qrExtractedData);
           },
           (error) => {
             console.log("Error connecting to web socket: ", error);
           }
         );
+
       }
     }
   }, [sessionId, alreadyConnectedToSocket, qrExtractedData]);
 
   const onPrivateMessage = (payload: any) => {
-    console.log(payload);
     var payloadData = JSON.parse(payload.body);
+    const { finalMessage, status } = mapArrivalMessageForStudent(
+      payloadData.message
+    );
     notifications.show({
+      color:
+        status === "departure"
+          ? "green"
+          : status === "error"
+          ? "red"
+          : undefined,
       withBorder: true,
-      title: "Scan",
-      message: `Skeniro si se`,
+      title: payloadData.firstName + " " + payloadData.lastName,
+      message: finalMessage,
     });
   };
+
+  useEffect(() => {
+    return () => {
+      if (stompClientRef.current) {
+        stompClientRef.current.disconnect();
+      }
+    };
+  }, []);
 
   const sendValue = (code: string) => {
     if (stompClientRef.current) {

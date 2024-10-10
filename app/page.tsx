@@ -106,11 +106,17 @@ export default function Home() {
           </Fieldset>
         </form>
       </div>
-      <div className={styles.addCredsContainer}>
+      <div className={styles.addCredsContainer1}>
         <Button variant="light" color="gray" onClick={() => quickCredsSet("sRamljak", "ovWd484J")}>sRamljak</Button>
         <Button variant="light" color="gray" onClick={() => quickCredsSet("kRakic", "Q1Q10wrj")}>kRakic</Button>
         <Button variant="light" color="gray" onClick={() => quickCredsSet("jJagoda", "DmrJp95p")}>jJagoda</Button>
         <Button variant="light" color="gray" onClick={() => quickCredsSet("mMarkic", "x33ARUs2")}>mMarkic</Button>
+      </div>
+      <div className={styles.addCredsContainer2}>
+        <Button variant="light" color="gray" onClick={() => quickCredsSet("jBakula", "abJHQQ87")}>jBakula</Button>
+        <Button variant="light" color="gray" onClick={() => quickCredsSet("fTomas", "fULI26iz")}>fTomas</Button>
+        <Button variant="light" color="gray" onClick={() => quickCredsSet("dDrljepan", "04Pnr79G")}>dDrljepan</Button>
+        <Button variant="light" color="gray" onClick={() => quickCredsSet("", "")}></Button>
       </div>
     </div>
   );

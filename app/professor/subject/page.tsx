@@ -22,6 +22,7 @@ import {
 import StartClassSessionModal from "@/app/components/professorComponents/StartClassSessionModal";
 import { getDecodedToken } from "@/app/auth/getDecodedToken";
 import Link from "next/link";
+import ViewClassSessionModal from "@/app/components/professorComponents/ViewClassSessionModal";
 
 function page() {
   const token = getPlainCookie();
@@ -40,7 +41,7 @@ function page() {
   const [response, setResponse] = useState<ClassSession[] | null>(null);
   // const [classSessions, setClassSessions] = useState<Study[]>([]);
   const [studyEdit, setStudyEdit] = useState<Study | null>(null);
-  const [studyDelete, setStudyDelete] = useState<Study | null>(null);
+  const [viewClassSessionId, setViewClassSessionId] = useState("0");
 
   const [elements, setElements] = useState<any[]>([]);
 
@@ -59,8 +60,8 @@ function page() {
     { open: openEditStudyModal, close: closeEditStudyModal },
   ] = useDisclosure(false);
   const [
-    openedDeleteStudyModal,
-    { open: openDeleteStudyModal, close: closeDeleteStudyModal },
+    openedViewClassSessionModal,
+    { open: openViewClassSessionModal, close: closeViewClassSessionModal },
   ] = useDisclosure(false);
 
   useEffect(() => {
@@ -133,15 +134,16 @@ function page() {
   }, [studyEdit]);
 
   // function to trigger openDeleteFacultyModal and set personEdit
-  const handleDeleteFaculty = (study: Study) => {
-    setStudyDelete(study);
+  const handleViewClassSession = (classSessionId: string) => {
+    setViewClassSessionId(classSessionId);
   };
 
   useEffect(() => {
-    if (studyDelete) {
-      openDeleteStudyModal();
+    if (viewClassSessionId !== "0") {
+      console.log("viewClassSessionId", viewClassSessionId);
+      openViewClassSessionModal();
     }
-  }, [studyDelete]);
+  }, [viewClassSessionId]);
 
   const rows = elements.map((element) => (
     <Table.Tr key={element.id}>
@@ -150,7 +152,7 @@ function page() {
         <b>{usePrintTime(element.startTime)}</b>
       </Table.Td>
       <Table.Td className={styles.column}>
-        {usePrintDate(element.endTIme)} <b>{usePrintTime(element.endTIme)}</b>
+        {usePrintDate(element.endTime)} <b>{usePrintTime(element.endTime)}</b>
       </Table.Td>
       <Table.Td className={styles.column}>{element.status}</Table.Td>
       <Table.Td className={styles.column}>
@@ -175,10 +177,10 @@ function page() {
             </Tooltip>
           )}
 
-          <Tooltip label="Obriši studij">
-            <Button color="red" onClick={() => handleDeleteFaculty(element)}>
+          <Tooltip label="Pregled predavanja">
+            <Button color="green" onClick={() => handleViewClassSession(element.id)}>
               <Image
-                src="/assets/svgs/trash.svg"
+                src="/assets/svgs/eye.svg"
                 alt="Delete"
                 width={24}
                 height={24}
@@ -240,6 +242,15 @@ function page() {
         creatorRole="ROLE_PROFESSOR"
         subjectId={subjectId}
         professorId={userId}
+      />
+      <ViewClassSessionModal
+        token={token}
+        opened={openedViewClassSessionModal}
+        open={openViewClassSessionModal}
+        close={closeViewClassSessionModal}
+        creatorRole="ROLE_PROFESSOR"
+        classSessionId={viewClassSessionId}
+        setClassSessionId={setViewClassSessionId}
       />
     </div>
   );
