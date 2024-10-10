@@ -12,7 +12,7 @@ export default function Page() {
   return (
     <div>
       <Navbar2 />
-      <div>stranica</div>
+      <div></div>
     </div>
   );
 }

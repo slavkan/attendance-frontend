@@ -19,7 +19,7 @@ export default function Page() {
         token={token}
         studiesChanged={false}
       />
-      <div>STUDENT</div>
+      <div></div>
     </div>
   );
 }

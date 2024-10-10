@@ -42,12 +42,16 @@ const NavbarWorker: React.FC<NavbarWorkerProps> = ({
 
   const [linksOpenedUsers, { toggle: toggleLinksUsers }] = useDisclosure(false);
   const [linksOpened, { toggle: toggleLinks }] = useDisclosure(false);
-  const [linksOpenedStudies, { toggle: toggleLinksStudies }] = useDisclosure(false);
+  const [linksOpenedStudies, { toggle: toggleLinksStudies }] =
+    useDisclosure(false);
 
   const theme = useMantineTheme();
 
   const decodedToken = getDecodedToken();
   const [userId, setUserId] = useState<string | null>(null);
+
+  const personId = decodedToken ? decodedToken.userId : "";
+  const personUsername = decodedToken ? decodedToken.username : "";
 
   useEffect(() => {
     if (decodedToken) {
@@ -219,8 +223,6 @@ const NavbarWorker: React.FC<NavbarWorkerProps> = ({
               Korisnici
             </Link> */}
 
-            
-
             <HoverCard
               width={600}
               position="bottom"
@@ -334,11 +336,25 @@ const NavbarWorker: React.FC<NavbarWorkerProps> = ({
                 </SimpleGrid>
               </HoverCard.Dropdown>
             </HoverCard>
-
           </Group>
 
           <Group visibleFrom="sm">
-            <Button>kRakic</Button>
+            <Text
+              style={{
+                color: "var(--mantine-color-dark-3)",
+                userSelect: "none",
+              }}
+            >
+              Radnik
+            </Text>
+            <Link
+              href={{
+                pathname: "/worker/profile",
+                query: { personId: personId },
+              }}
+            >
+              <Button>{personUsername}</Button>
+            </Link>
             <Button variant="default" onClick={handleLogout}>
               Odjava
             </Button>
@@ -357,7 +373,7 @@ const NavbarWorker: React.FC<NavbarWorkerProps> = ({
         onClose={closeDrawer}
         size="100%"
         padding="md"
-        title="Izbornik"
+        title="Izbornik - Radnik"
         hiddenFrom="sm"
         zIndex={1000000}
       >
@@ -421,8 +437,17 @@ const NavbarWorker: React.FC<NavbarWorkerProps> = ({
           <Divider my="sm" />
 
           <Group justify="center" grow pb="xl" px="md">
-            <Button variant="default">Log in</Button>
-            <Button>Sign up</Button>
+            <Link
+              href={{
+                pathname: "/worker/profile",
+                query: { personId: personId },
+              }}
+            >
+              <Button fullWidth>{personUsername}</Button>
+            </Link>
+            <Button variant="default" onClick={handleLogout}>
+              Odjava
+            </Button>
           </Group>
         </ScrollArea>
       </Drawer>
