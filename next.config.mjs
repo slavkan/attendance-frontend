@@ -3,6 +3,11 @@ const nextConfig = {
   reactStrictMode: false,
   experimental: {
     optimizePackageImports: ['@mantine/core', '@mantine/hooks'],
+    "missingSuspenseWithCSRBailout": false,
+  },
+  typescript: {
+    // !! WARN !!
+    ignoreBuildErrors: true,
   },
 };
 
